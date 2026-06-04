@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: shield-postgres
+    environment:
+      POSTGRES_DB: accountshield
+      POSTGRES_USER: shield
+      POSTGRES_PASSWORD: shield_pw
+    ports:
+      - "5432:5432"
+    volumes:
+      - shield_pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    container_name: shield-redis
+    ports:
+      - "6379:6379"
+
+volumes:
+  shield_pgdata:
