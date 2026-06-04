@@ -13,6 +13,9 @@ target/
 .springBeans
 .sts4-cache
 
+.DS_Store
+Thumbs.db
+
 ### IntelliJ IDEA ###
 .idea
 *.iws
@@ -31,3 +34,14 @@ build/
 
 ### VS Code ###
 .vscode/
+.classpath
+.project
+.settings/
+*.log
+
+.env
+*.env
+application-local.yml
+application-local.properties
+src/main/resources/application-secret*.yml
+
