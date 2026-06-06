@@ -56,7 +56,9 @@ public class AuthController {
         boolean success = opt.isPresent()
                 && encoder.matches(req.password(), opt.get().getPasswordHash());
 
-        recordAttempt(req.email(), ip, success, opt.map(User::getTenantId).orElse(null) );
+        recordAttempt(req.email(), ip, success,
+                opt.map(User::getTenantId).orElse(null),
+                opt.map(User::getId).orElse(null));
 
         if (!success) {
             return ResponseEntity.status(401).body(Map.of("error", "invalid credentials"));
@@ -66,12 +68,13 @@ public class AuthController {
         return ResponseEntity.ok(new AuthResponse(jwt.generate(u), u.getRole().name(), u.getEmail()));
     }
 
-    private void recordAttempt(String email, String ip, boolean success, Long tenantId) {
+    private void recordAttempt(String email, String ip, boolean success, Long tenantId, Long userId) {
         LoginAttempt attempt = new LoginAttempt();
         attempt.setEmailAttempted(email);
         attempt.setIpAddress(ip);
         attempt.setSuccess(success);
-        attempt.setTenantId(tenantId);
+        attempt.setTenantId(tenantId == null ? 1L : tenantId);
+        attempt.setUserId(userId);
         loginAttempts.save(attempt);
     }
 
