@@ -3,9 +3,9 @@ services:
     image: postgres:16
     container_name: shield-postgres
     environment:
-      POSTGRES_DB: accountshield
-      POSTGRES_USER: shield
-      POSTGRES_PASSWORD: shield_pw
+      POSTGRES_USER: ${POSTGRES_USER:-shield}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-shield_pw}
+      POSTGRES_DB: ${POSTGRES_DB:-accountshield}
     ports:
       - "5432:5432"
     volumes:
