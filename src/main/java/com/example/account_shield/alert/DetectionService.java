@@ -1,6 +1,10 @@
 package com.example.account_shield.alert;
 
-
+import com.example.account_shield.alert.AlertEntity;
+import com.example.account_shield.alert.AlertRepository;
+import com.example.account_shield.alert.AlertSeverity;
+import com.example.account_shield.alert.AlertStatus;
+import com.example.account_shield.alert.AlertType;
 import com.example.account_shield.entity.LoginAttempt;
 import com.example.account_shield.repository.LoginAttemptRepository;
 import org.springframework.stereotype.Service;
@@ -19,47 +23,57 @@ public class DetectionService {
     }
 
     public void analyzeAttempt(LoginAttempt attempt) {
-        // only failed attempts are worth analyzing — a successful login isn't an attack
         if (attempt.isSuccess()) {
             return;
         }
 
-        // BRUTE FORCE: many failed attempts against ONE email in 10 minutes
         long failedForEmail = loginAttempts.countFailedAttemptsForEmail(
                 attempt.getEmailAttempted(),
                 OffsetDateTime.now().minusMinutes(10)
         );
         if (failedForEmail >= 5) {
-            createAlert(
+            createAlertIfNew(
                     attempt.getTenantId(),
                     AlertType.BRUTE_FORCE,
                     AlertSeverity.HIGH,
                     "Brute-force: " + failedForEmail + " failed attempts on "
                             + attempt.getEmailAttempted() + " in 10 minutes",
+                    attempt.getEmailAttempted(),   // the "target" to dedupe on
                     attempt.getId()
             );
             return;
         }
 
-        // CREDENTIAL STUFFING: ONE IP failing against many DIFFERENT emails in 5 minutes
         long distinctEmailsFromIp = loginAttempts.countDistinctEmailsAttackedFromIp(
                 attempt.getIpAddress(),
                 OffsetDateTime.now().minusMinutes(5)
         );
         if (distinctEmailsFromIp >= 10) {
-            createAlert(
+            createAlertIfNew(
                     attempt.getTenantId(),
                     AlertType.CREDENTIAL_STUFFING,
                     AlertSeverity.HIGH,
                     "Credential-stuffing: " + distinctEmailsFromIp + " different accounts attacked from IP "
                             + attempt.getIpAddress() + " in 5 minutes",
+                    attempt.getIpAddress(),        // the "target" to dedupe on
                     attempt.getId()
             );
         }
     }
 
-    private void createAlert(Long tenantId, AlertType type, AlertSeverity severity,
-                             String details, Long loginAttemptId) {
+    private void createAlertIfNew(Long tenantId, AlertType type, AlertSeverity severity,
+                                  String details, String target, Long loginAttemptId) {
+        // dedupe: if an OPEN alert of this type for this target already exists
+        // in the last 15 minutes, don't create another one
+        long existing = alerts.countRecentOpenAlerts(
+                type,
+                "%" + target + "%",
+                OffsetDateTime.now().minusMinutes(15)
+        );
+        if (existing > 0) {
+            return;  // already alerted on this attack — skip
+        }
+
         AlertEntity alert = new AlertEntity();
         alert.setTenantId(tenantId);
         alert.setType(type);
