@@ -1,5 +1,6 @@
 package com.example.account_shield.controller;
 
+import com.example.account_shield.alert.DetectionService;
 import com.example.account_shield.domain.Role;
 import com.example.account_shield.entity.LoginAttempt;
 import com.example.account_shield.entity.User;
@@ -23,15 +24,17 @@ public class AuthController {
     private final PasswordEncoder encoder;
     private final JwtService jwt;
     private final LoginAttemptRepository loginAttempts;
+    private final DetectionService detection;
 
     public AuthController(UserRepository users,
                           PasswordEncoder encoder,
                           JwtService jwt,
-                          LoginAttemptRepository loginAttempts) {
+                          LoginAttemptRepository loginAttempts, DetectionService detection) {
         this.users = users;
         this.encoder = encoder;
         this.jwt = jwt;
         this.loginAttempts = loginAttempts;
+        this.detection = detection;
     }
 
     @PostMapping("/register")
@@ -75,7 +78,9 @@ public class AuthController {
         attempt.setSuccess(success);
         attempt.setTenantId(tenantId == null ? 1L : tenantId);
         attempt.setUserId(userId);
-        loginAttempts.save(attempt);
+
+        LoginAttempt saved = loginAttempts.save(attempt);
+        detection.analyzeAttempt(saved);
     }
 
     private String extractClientIp(HttpServletRequest request) {
