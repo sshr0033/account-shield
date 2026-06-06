@@ -1,4 +1,11 @@
 package com.example.account_shield.domain;
 
-public enum Role {MEMBER, ADMIN, FRAUD_ANALYST
+public enum Role {
+
+
+        MEMBER,
+        FRAUD_ANALYST,
+        TENANT_ADMIN,
+        PLATFORM_ADMIN
+
 }

@@ -7,16 +7,27 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.OffsetDateTime;
 
-@Entity
 @Getter
 @Setter
-@Table(name = "tenants")
-public class Tenant
-{
+@Entity
+@Table(name = "login_attempts")
+public class LoginAttempt {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String name;
+
+    @Column(name = "tenant_id")
+    private Long tenantId;
+
+    @Column(name = "email_attempted", nullable = false)
+    private String emailAttempted;
+
+    @Column(name = "ip_address")
+    private String ipAddress;
+
+    @Column(nullable = false)
+    private boolean success;
 
 
     @CreationTimestamp
