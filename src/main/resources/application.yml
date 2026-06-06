@@ -22,5 +22,5 @@ server:
 
 security:
   jwt:
-    secret: "shreya88@shrestha1999indiainaust"
+    secret: ${JWT_SECRET:default-secret-for-testing}
     expiration-ms: 3600000
