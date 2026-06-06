@@ -17,22 +17,25 @@ public class LoginAttempt {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "tenant_id")
+    @Column(name = "tenant_id", nullable = false)
     private Long tenantId;
+
+    @Column(name = "user_id")
+    private Long userId;
 
     @Column(name = "email_attempted", nullable = false)
     private String emailAttempted;
 
-    @Column(name = "ip_address")
+    @Column(name = "ip_address", nullable = false)
     private String ipAddress;
+
+    @Column(name = "country")
+    private String country;
 
     @Column(nullable = false)
     private boolean success;
 
-
     @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "created_at", updatable = false, nullable = false)
     private OffsetDateTime createdAt;
-
-
 }
