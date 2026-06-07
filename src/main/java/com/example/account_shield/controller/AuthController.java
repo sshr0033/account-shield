@@ -1,6 +1,6 @@
 package com.example.account_shield.controller;
 
-import com.example.account_shield.alert.DetectionService;
+import com.example.account_shield.kafka.LoginAttemptProducer;
 import com.example.account_shield.domain.Role;
 import com.example.account_shield.entity.LoginAttempt;
 import com.example.account_shield.entity.User;
@@ -26,19 +26,25 @@ public class AuthController {
     private final PasswordEncoder encoder;
     private final JwtService jwt;
     private final LoginAttemptRepository loginAttempts;
-    private final DetectionService detection;
+
+    private final LoginAttemptProducer producer;
+
     private final MfaService mfa ;
 
 
     public AuthController(UserRepository users,
                           PasswordEncoder encoder,
                           JwtService jwt,
-                          LoginAttemptRepository loginAttempts, DetectionService detection, MfaService mfa) {
+
+                          LoginAttemptRepository loginAttempts, LoginAttemptProducer producer, MfaService mfa) {
+
         this.users = users;
         this.encoder = encoder;
         this.jwt = jwt;
         this.loginAttempts = loginAttempts;
-        this.detection = detection;
+
+        this.producer = producer;
+
         this.mfa= mfa;
     }
 
@@ -100,7 +106,7 @@ public class AuthController {
         attempt.setUserId(userId);
 
         LoginAttempt saved = loginAttempts.save(attempt);
-        detection.analyzeAttempt(saved);
+        producer.publishAttemptId(saved.getId());
     }
 
     private String extractClientIp(HttpServletRequest request) {

@@ -10,6 +10,14 @@ spring:
       hibernate:
         format_sql: true
     show-sql: true
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      group-id: account-shield-detection
+      auto-offset-reset: earliest
   flyway:
     enabled: true
   data:
