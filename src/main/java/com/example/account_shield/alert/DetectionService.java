@@ -1,10 +1,6 @@
 package com.example.account_shield.alert;
 
-import com.example.account_shield.alert.AlertEntity;
-import com.example.account_shield.alert.AlertRepository;
-import com.example.account_shield.alert.AlertSeverity;
-import com.example.account_shield.alert.AlertStatus;
-import com.example.account_shield.alert.AlertType;
+
 import com.example.account_shield.entity.LoginAttempt;
 import com.example.account_shield.repository.LoginAttemptRepository;
 import org.springframework.stereotype.Service;

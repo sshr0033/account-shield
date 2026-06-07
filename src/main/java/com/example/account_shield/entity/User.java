@@ -11,7 +11,6 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.OffsetDateTime;
 @Getter
 @Setter
-
 @Entity
 @Table(name = "app_users")
 public class User {
@@ -33,6 +32,8 @@ public class User {
     @Column(name = "mfa_enabled")
     private boolean mfaEnabled;
 
+    @Column(name = "mfa_secret")
+    private String mfaSecret;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

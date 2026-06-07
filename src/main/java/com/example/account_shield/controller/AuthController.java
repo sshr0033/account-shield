@@ -4,6 +4,7 @@ import com.example.account_shield.alert.DetectionService;
 import com.example.account_shield.domain.Role;
 import com.example.account_shield.entity.LoginAttempt;
 import com.example.account_shield.entity.User;
+import com.example.account_shield.mfa.MfaService;
 import com.example.account_shield.repository.LoginAttemptRepository;
 import com.example.account_shield.repository.UserRepository;
 import com.example.account_shield.security.JwtService;
@@ -12,6 +13,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+
 
 import java.util.Map;
 import java.util.Optional;
@@ -25,16 +27,19 @@ public class AuthController {
     private final JwtService jwt;
     private final LoginAttemptRepository loginAttempts;
     private final DetectionService detection;
+    private final MfaService mfa ;
+
 
     public AuthController(UserRepository users,
                           PasswordEncoder encoder,
                           JwtService jwt,
-                          LoginAttemptRepository loginAttempts, DetectionService detection) {
+                          LoginAttemptRepository loginAttempts, DetectionService detection, MfaService mfa) {
         this.users = users;
         this.encoder = encoder;
         this.jwt = jwt;
         this.loginAttempts = loginAttempts;
         this.detection = detection;
+        this.mfa= mfa;
     }
 
     @PostMapping("/register")
@@ -68,6 +73,21 @@ public class AuthController {
         }
 
         User u = opt.get();
+
+        // MFA check: if this user has MFA enabled, the 6-digit code is required
+        if (u.isMfaEnabled()) {
+            if (req.mfaCode() == null || req.mfaCode().isBlank()) {
+                return ResponseEntity.status(401).body(Map.of(
+                        "error", "MFA code required",
+                        "mfaRequired", true
+                ));
+            }
+            boolean codeValid = mfa.verifyCode(u.getMfaSecret(), req.mfaCode());
+            if (!codeValid) {
+                return ResponseEntity.status(401).body(Map.of("error", "invalid MFA code"));
+            }
+        }
+
         return ResponseEntity.ok(new AuthResponse(jwt.generate(u), u.getRole().name(), u.getEmail()));
     }
 
