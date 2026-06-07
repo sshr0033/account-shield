@@ -52,7 +52,13 @@ public class GeminiService {
 
             return extractText(response);
         } catch (Exception e) {
-            return "Could not generate explanation: " + e.getMessage();
+            String msg = e.getMessage() == null ? "" : e.getMessage();
+            if (msg.contains("429") || msg.contains("RESOURCE_EXHAUSTED")) {
+                return "AI explanation is temporarily unavailable (language model rate limit reached). "
+                        + "This is a " + alertType.toLowerCase().replace("_", " ")
+                        + " alert of " + severity + " severity — review the details and investigate the source IP/account.";
+            }
+            return "AI explanation is temporarily unavailable. Please try again shortly.";
         }
     }
 

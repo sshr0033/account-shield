@@ -1,0 +1,154 @@
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: #0b0f17;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.login-wrap {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-card {
+  background: #131a26;
+  border: 1px solid #1f2937;
+  border-radius: 12px;
+  padding: 40px;
+  width: 360px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+}
+
+.brand {
+  color: #f8fafc;
+  font-size: 24px;
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+.subtitle {
+  color: #64748b;
+  font-size: 13px;
+  margin: 4px 0 28px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.login-card label {
+  color: #94a3b8;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.login-card input {
+  background: #0b0f17;
+  border: 1px solid #2a3441;
+  border-radius: 8px;
+  padding: 11px 14px;
+  color: #e2e8f0;
+  font-size: 14px;
+  margin-bottom: 18px;
+  outline: none;
+}
+
+.login-card input:focus { border-color: #3b82f6; }
+
+.login-card button {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 4px;
+}
+
+.login-card button:disabled { opacity: 0.6; cursor: default; }
+
+.error {
+  background: #2a1418;
+  border: 1px solid #5b2330;
+  color: #fca5a5;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+.dash { display: flex; min-height: 100vh; }
+
+.sidebar {
+  width: 220px;
+  background: #0d1320;
+  border-right: 1px solid #1f2937;
+  padding: 24px 0;
+  display: flex;
+  flex-direction: column;
+}
+.sidebar .logo {
+  color: #f8fafc; font-size: 17px; font-weight: 700;
+  padding: 0 24px 24px; letter-spacing: -0.3px;
+}
+.nav-item {
+  padding: 10px 24px; color: #94a3b8; font-size: 14px; cursor: pointer;
+}
+.nav-item.active {
+  color: #f8fafc; background: #16203100; border-left: 2px solid #3b82f6;
+  background: #131a26;
+}
+.user-box { margin-top: auto; padding: 16px 24px 0; border-top: 1px solid #1f2937; }
+.user-email { color: #64748b; font-size: 12px; margin-bottom: 8px; word-break: break-all; }
+.logout {
+  background: transparent; border: 1px solid #2a3441; color: #94a3b8;
+  padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer;
+}
+
+.main { flex: 1; padding: 32px 40px; }
+.topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; }
+.topbar h1 { color: #f8fafc; font-size: 22px; margin: 0; }
+.refresh {
+  background: #131a26; border: 1px solid #2a3441; color: #e2e8f0;
+  padding: 8px 16px; border-radius: 8px; font-size: 13px; cursor: pointer;
+}
+
+.stats { display: flex; gap: 16px; margin-bottom: 28px; }
+.stat {
+  background: #131a26; border: 1px solid #1f2937; border-radius: 10px;
+  padding: 18px 24px; min-width: 120px;
+}
+.stat-num { color: #f8fafc; font-size: 28px; font-weight: 700; }
+.stat-label { color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+
+.alerts-table { width: 100%; border-collapse: collapse; background: #131a26; border-radius: 10px; overflow: hidden; }
+.alerts-table th {
+  text-align: left; padding: 14px 16px; color: #64748b; font-size: 12px;
+  text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #1f2937;
+}
+.alerts-table td { padding: 14px 16px; color: #cbd5e1; font-size: 14px; border-bottom: 1px solid #1a2230; }
+.mono { font-family: ui-monospace, monospace; color: #64748b; }
+.details { color: #94a3b8; font-size: 13px; }
+
+.badge { padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; letter-spacing: 0.5px; }
+.badge.HIGH { background: #2a1418; color: #fca5a5; border: 1px solid #5b2330; }
+.badge.MEDIUM { background: #2a2410; color: #fcd34d; border: 1px solid #5b4d23; }
+.badge.LOW { background: #14241a; color: #86efac; border: 1px solid #235b30; }
+
+.status { color: #94a3b8; font-size: 12px; }
+.explain-btn {
+  background: #1e293b; border: 1px solid #334155; color: #93c5fd;
+  padding: 6px 14px; border-radius: 6px; font-size: 12px; cursor: pointer;
+}
+.explain-btn:disabled { opacity: 0.5; }
+.explain-row td { background: #0f1521; }
+.explanation { color: #cbd5e1; font-size: 13px; line-height: 1.6; padding: 4px 0; }
+.explanation strong { color: #93c5fd; }
+
+.msg { color: #94a3b8; padding: 40px; text-align: center; }
+.error-msg { color: #fca5a5; }
