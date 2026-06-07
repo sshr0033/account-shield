@@ -1,0 +1,31 @@
+const API_BASE = "http://localhost:8080";
+
+export async function login(email, password) {
+  const res = await fetch(`${API_BASE}/api/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || "Login failed");
+  }
+  return res.json(); // { token, role, email }
+}
+
+export async function getAlerts(token) {
+  const res = await fetch(`${API_BASE}/api/analyst/alerts`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("Failed to load alerts");
+  return res.json();
+}
+
+export async function explainAlert(token, alertId) {
+  const res = await fetch(`${API_BASE}/api/analyst/alerts/${alertId}/explain`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("Failed to explain alert");
+  return res.json(); // { alertId, explanation }
+}
