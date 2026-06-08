@@ -8,6 +8,7 @@ import { login } from "./api";
 import { loginSuccess } from "./store/authSlice";
 import Dashboard from "./Dashboard";
 import AdminDashboard from "./AdminDashboard";
+import TenantAdminDashboard from "./TenantAdminDashboard";
 
 
 export default function App() {
@@ -39,11 +40,10 @@ export default function App() {
     }
   }
 
-  // If logged in, show the dashboard (it reads auth from Redux)
-  if (isAuthenticated) {
+ if (isAuthenticated) {
     if (role === "PLATFORM_ADMIN") return <AdminDashboard />;
+    if (role === "TENANT_ADMIN") return <TenantAdminDashboard />;
     if (role === "FRAUD_ANALYST") return <Dashboard />;
-    // fallback for other roles (TENANT_ADMIN, MEMBER) for now
     return <Dashboard />;
   }
 

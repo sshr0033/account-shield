@@ -68,6 +68,60 @@ export async function createTenantAdmin(token, { email, password, tenantId }) {
   return res.json();
 }
 
+export async function getMyMembers(token) {
+  const res = await fetch(`${API_BASE}/api/tenant-admin/users`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("Failed to load members");
+  return res.json();
+}
+
+export async function addMember(token, { email, password, role }) {
+  const res = await fetch(`${API_BASE}/api/tenant-admin/users`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password, role: role || "MEMBER" }),
+  });
+  if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || "Failed to add member"); }
+  return res.json();
+}
+
+export async function updateMember(token, id, fields) {
+  const res = await fetch(`${API_BASE}/api/tenant-admin/users/${id}`, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify(fields),
+  });
+  if (!res.ok) throw new Error("Failed to update member");
+  return res.json();
+}
+
+export async function deleteMember(token, id) {
+  const res = await fetch(`${API_BASE}/api/tenant-admin/users/${id}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("Failed to delete member");
+  return res.json();
+}
+
+export async function getMemberLoginAttempts(token, id) {
+  const res = await fetch(`${API_BASE}/api/tenant-admin/users/${id}/login-attempts`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("Failed to load member activity");
+  return res.json();
+}
+
+export async function resetMemberBlock(token, id) {
+  const res = await fetch(`${API_BASE}/api/tenant-admin/users/${id}/reset-block`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("Failed to reset block");
+  return res.json();
+}
+
 export async function deleteUser(token, userId) {
   const res = await fetch(`${API_BASE}/api/platform-admin/users/${userId}`, {
     method: "DELETE",
