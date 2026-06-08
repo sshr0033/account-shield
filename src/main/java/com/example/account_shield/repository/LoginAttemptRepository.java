@@ -27,6 +27,7 @@ public interface LoginAttemptRepository extends JpaRepository<LoginAttempt, Long
             """)
     long countDistinctEmailsAttackedFromIp(@Param("ip") String ip, @Param("since") OffsetDateTime since);
 
+    List<LoginAttempt> findByEmailAttemptedOrderByCreatedAtDesc(String email, Pageable pageable);
 
     List<LoginAttempt> findByTenantIdOrderByCreatedAtDesc(Long tenantId, Pageable pageable);
 }

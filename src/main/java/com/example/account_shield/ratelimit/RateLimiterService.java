@@ -40,6 +40,30 @@ public class RateLimiterService {
         }
     }
 
+    private String keyForEmail(String email) {
+        return "failed_attempts:email:" + email;
+    }
+
+    // Record a failed attempt for a specific account (email), for visibility/admin reset
+    public void recordFailureForEmail(String email) {
+        if (email == null || email.isBlank()) return;
+        String key = keyForEmail(email);
+        Long count = redis.opsForValue().increment(key);
+        if (count != null && count == 1L) {
+            redis.expire(key, WINDOW);
+        }
+    }
+
+    // How many recent failures for this account
+    public int currentCountForEmail(String email) {
+        String value = redis.opsForValue().get(keyForEmail(email));
+        return value == null ? 0 : Integer.parseInt(value);
+    }
+
+    // Reset a specific member's failure counter (admin action)
+    public void resetForEmail(String email) {
+        redis.delete(keyForEmail(email));
+    }
     // Clear the counter (e.g. on a successful login)
     public void reset(String ip) {
         redis.delete(keyFor(ip));
