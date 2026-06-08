@@ -1,11 +1,15 @@
 package com.example.account_shield.controller;
 
 import com.example.account_shield.entity.LoginAttempt;
+import com.example.account_shield.entity.User;
 import com.example.account_shield.repository.LoginAttemptRepository;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import com.example.account_shield.entity.User;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 import java.awt.print.Pageable;
 import java.util.List;
@@ -21,8 +25,7 @@ public class LoginActivityController {
     }
 
     @GetMapping("/login-attempts")
-    public List<LoginAttempt> recentAttempts() {
-        // most recent 50 attempts for tenant 1 (matching how alerts are scoped for now)
-        return loginAttempts.findByTenantIdOrderByCreatedAtDesc(1L, PageRequest.of(0, 50));
+    public List<LoginAttempt> recentAttempts(@AuthenticationPrincipal User user) {
+        return loginAttempts.findByTenantIdOrderByCreatedAtDesc(user.getTenantId(), PageRequest.of(0, 50));
     }
 }
