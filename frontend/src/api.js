@@ -146,6 +146,31 @@ export async function releaseBlockAlert(token, id) {
   return res.json();
 }
 
+export async function submitEnquiry({ companyName, contactEmail, message }) {
+  const res = await fetch(`${API_BASE}/api/enquiries`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ companyName, contactEmail, message }),
+  });
+  if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || "Failed to submit"); }
+  return res.json();
+}
+export async function getEnquiries(token) {
+  const res = await fetch(`${API_BASE}/api/platform-admin/enquiries`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("Failed to load enquiries");
+  return res.json();
+}
+
+export async function approveEnquiry(token, id) {
+  const res = await fetch(`${API_BASE}/api/platform-admin/enquiries/${id}/approve`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || "Failed to approve"); }
+  return res.json();
+}
 export async function deleteUser(token, userId) {
   const res = await fetch(`${API_BASE}/api/platform-admin/users/${userId}`, {
     method: "DELETE",
