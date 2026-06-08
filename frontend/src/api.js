@@ -68,11 +68,53 @@ export async function createTenantAdmin(token, { email, password, tenantId }) {
   return res.json();
 }
 
+export async function deleteUser(token, userId) {
+  const res = await fetch(`${API_BASE}/api/platform-admin/users/${userId}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("Failed to delete user");
+  return res.json();
+}
+
+export async function getTenantUsers(token, tenantId) {
+  const res = await fetch(`${API_BASE}/api/platform-admin/tenants/${tenantId}/users`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("Failed to load tenant users");
+  return res.json();
+}
+
 export async function resetBlocks(token) {
   const res = await fetch(`${API_BASE}/api/platform-admin/reset-blocks`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!res.ok) throw new Error("Failed to reset blocks");
+  return res.json();
+}
+
+export async function deleteTenant(token, tenantId) {
+  const res = await fetch(`${API_BASE}/api/platform-admin/tenants/${tenantId}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("Failed to delete tenant");
+  return res.json();
+}
+
+export async function getTenantAlerts(token, tenantId) {
+  const res = await fetch(`${API_BASE}/api/platform-admin/tenants/${tenantId}/alerts`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("Failed to load tenant alerts");
+  return res.json();
+}
+
+export async function getTenantLoginAttempts(token, tenantId) {
+  const res = await fetch(`${API_BASE}/api/platform-admin/tenants/${tenantId}/login-attempts`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("Failed to load tenant login activity");
   return res.json();
 }
