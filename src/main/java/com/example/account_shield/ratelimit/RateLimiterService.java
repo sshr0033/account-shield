@@ -25,6 +25,7 @@ public class RateLimiterService {
 
     // Is this IP currently blocked? (already at or over the limit)
     public boolean isBlocked(String ip) {
+        if (isPermanentlyBlocked(ip)) return true;   // permanent block
         String value = redis.opsForValue().get(keyFor(ip));
         if (value == null) return false;
         return Integer.parseInt(value) >= MAX_FAILURES;
@@ -81,5 +82,25 @@ public class RateLimiterService {
         if (keys != null && !keys.isEmpty()) {
             redis.delete(keys);
         }
+    }
+
+    private String permanentKey(String ip) {
+        return "permanent_block:" + ip;
+    }
+
+    // Permanently block an IP (no expiry)
+    public void blockForever(String ip) {
+        if (ip == null || ip.isBlank()) return;
+        redis.opsForValue().set(permanentKey(ip), "1");  // no TTL = permanent
+    }
+
+    // Is this IP permanently blocked?
+    public boolean isPermanentlyBlocked(String ip) {
+        return redis.opsForValue().get(permanentKey(ip)) != null;
+    }
+
+    // Remove a permanent block
+    public void releasePermanent(String ip) {
+        redis.delete(permanentKey(ip));
     }
 }
