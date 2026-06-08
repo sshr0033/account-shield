@@ -38,4 +38,5 @@ public class TenantController {
         tenants.deleteById(id);
         return ResponseEntity.ok(Map.of("message", "Tenant and its users deleted", "tenantId", id));
     }
+
 }

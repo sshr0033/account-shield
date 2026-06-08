@@ -86,12 +86,14 @@ public class AuthController {
                 opt.map(User::getId).orElse(null));
 
         if (!success) {
-            rateLimiter.recordFailure(ip);   // increment the Redis counter
+            rateLimiter.recordFailure(ip);
+            rateLimiter.recordFailureForEmail(req.email());
             return ResponseEntity.status(401).body(Map.of("error", "invalid credentials"));
         }
 
         // success — clear any failure counter for this IP
         rateLimiter.reset(ip);
+        rateLimiter.resetForEmail(req.email());
 
         User u = opt.get();
 
