@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
+import { getAlerts, explainAlert, getLoginAttempts } from "./api";
 import {
-  Box, Drawer, AppBar, Toolbar, Typography, Button, Card, CardContent,
+  Box, Drawer, Typography, Button, Card, CardContent,
   Table, TableBody, TableCell, TableHead, TableRow, Chip, Paper,
-  CircularProgress, Collapse,
+  CircularProgress, Collapse,IconButton,
 } from "@mui/material";
 import ShieldIcon from "@mui/icons-material/Shield";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
-import { getAlerts, explainAlert } from "./api";
 import { logout } from "./store/authSlice";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 
 const DRAWER_WIDTH = 230;
 
@@ -21,6 +23,8 @@ export default function Dashboard() {
   const [error, setError] = useState("");
   const [explaining, setExplaining] = useState(null);
   const [explanations, setExplanations] = useState({});
+  const [attempts, setAttempts] = useState([]);
+  const [showActivity, setShowActivity] = useState(true);
 
   useEffect(() => {
     loadAlerts();
@@ -30,8 +34,12 @@ export default function Dashboard() {
     setLoading(true);
     setError("");
     try {
-      const data = await getAlerts(token);
-      setAlerts(data);
+      const [alertData, attemptData] = await Promise.all([
+        getAlerts(token),
+        getLoginAttempts(token),
+      ]);
+      setAlerts(alertData);
+      setAttempts(attemptData);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -55,17 +63,20 @@ export default function Dashboard() {
     sev === "HIGH" ? "error" : sev === "MEDIUM" ? "warning" : "success";
 
   return (
-    <Box sx={{ display: "flex" }}>
+    <Box sx={{ display: "flex", minHeight: "100vh" }}>
       {/* Sidebar */}
       <Drawer
         variant="permanent"
         sx={{
           width: DRAWER_WIDTH,
+          flexShrink: 0,
           "& .MuiDrawer-paper": {
             width: DRAWER_WIDTH,
             boxSizing: "border-box",
             bgcolor: "#0d1320",
             borderRight: "1px solid #1f2937",
+            display: "flex",
+            flexDirection: "column",
           },
         }}
       >
@@ -76,27 +87,21 @@ export default function Dashboard() {
         <Box sx={{ px: 3, py: 1.5, bgcolor: "#131a26", borderLeft: "2px solid #3b82f6" }}>
           <Typography variant="body2">Alerts</Typography>
         </Box>
-        <Box sx={{ mt: "auto", p: 3, borderTop: "1px solid #1f2937" }}>
-          <Typography variant="caption" sx={{ color: "#64748b", display: "block", mb: 1 }}>
-            {email}
-          </Typography>
-          <Chip label={role} size="small" sx={{ mb: 1.5 }} />
-          <Button
-            variant="outlined"
-            size="small"
-            fullWidth
-            onClick={() => dispatch(logout())}
-          >
-            Sign out
-          </Button>
-        </Box>
       </Drawer>
 
-      {/* Main */}
-      <Box component="main" sx={{ flexGrow: 1, p: 4 }}>
+      {/* Main content */}
+      <Box component="main" sx={{ flexGrow: 1, p: 4, overflow: "auto" }}>
+        {/* Top bar */}
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 4 }}>
           <Typography variant="h5" fontWeight={700}>Security Alerts</Typography>
-          <Button variant="outlined" onClick={loadAlerts}>Refresh</Button>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Chip label={role} size="small" />
+            <Typography variant="caption" sx={{ color: "#94a3b8" }}>{email}</Typography>
+            <Button variant="outlined" onClick={loadAlerts}>Refresh</Button>
+            <Button variant="contained" color="error" onClick={() => dispatch(logout())}>
+              Sign out
+            </Button>
+          </Box>
         </Box>
 
         {/* Stat cards */}
@@ -109,8 +114,9 @@ export default function Dashboard() {
         {loading && <CircularProgress />}
         {error && <Typography color="error">{error}</Typography>}
 
+        {/* Alerts table */}
         {!loading && !error && (
-          <Paper sx={{ border: "1px solid #1f2937" }}>
+          <Paper sx={{ border: "1px solid #1f2937", mb: 4 }}>
             <Table>
               <TableHead>
                 <TableRow>
@@ -149,9 +155,7 @@ export default function Dashboard() {
                       <TableCell colSpan={6} sx={{ py: 0, border: 0 }}>
                         <Collapse in={!!explanations[a.id]}>
                           <Box sx={{ p: 2, bgcolor: "#0f1521", borderRadius: 1, my: 1 }}>
-                            <Typography variant="body2" sx={{ color: "#93c5fd" }}>
-                              AI Explanation
-                            </Typography>
+                            <Typography variant="body2" sx={{ color: "#93c5fd" }}>AI Explanation</Typography>
                             <Typography variant="body2" sx={{ color: "#cbd5e1", mt: 0.5 }}>
                               {explanations[a.id]}
                             </Typography>
@@ -164,6 +168,65 @@ export default function Dashboard() {
               </TableBody>
             </Table>
           </Paper>
+        )}
+
+        {/* Recent login activity */}
+        {/* Recent login activity (collapsible) */}
+        {!loading && !error && (
+          <Box>
+          <Box
+              sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Typography variant="h6" fontWeight={700}>
+                  Recent Login Activity
+                </Typography>
+                <Chip label={attempts.length} size="small" />
+              </Box>
+              <IconButton
+                size="small"
+                sx={{ color: "#94a3b8" }}
+                onClick={() => setShowActivity((v) => !v)}
+              >
+                {showActivity ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+              </IconButton>
+            </Box>
+
+            <Collapse in={showActivity}>
+              <Paper sx={{ border: "1px solid #1f2937" }}>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Time</TableCell>
+                      <TableCell>Email Attempted</TableCell>
+                      <TableCell>IP Address</TableCell>
+                      <TableCell>Result</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {attempts.map((a) => (
+                      <TableRow key={a.id}>
+                        <TableCell sx={{ color: "#64748b", fontSize: 12, fontFamily: "monospace" }}>
+                          {a.createdAt ? new Date(a.createdAt).toLocaleTimeString() : "—"}
+                        </TableCell>
+                        <TableCell sx={{ fontSize: 13 }}>{a.emailAttempted}</TableCell>
+                        <TableCell sx={{ fontFamily: "monospace", fontSize: 12, color: "#94a3b8" }}>
+                          {a.ipAddress}
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={a.success ? "SUCCESS" : "FAILED"}
+                            color={a.success ? "success" : "error"}
+                            size="small"
+                          />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </Paper>
+            </Collapse>
+          </Box>
         )}
       </Box>
     </Box>
