@@ -37,3 +37,42 @@ export async function getLoginAttempts(token) {
   if (!res.ok) throw new Error("Failed to load login activity");
   return res.json();
 }
+export async function getTenants(token) {
+  const res = await fetch(`${API_BASE}/api/tenants`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("Failed to load tenants");
+  return res.json();
+}
+
+export async function createTenant(token, name) {
+  const res = await fetch(`${API_BASE}/api/platform-admin/tenants`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ name }),
+  });
+  if (!res.ok) throw new Error("Failed to create tenant");
+  return res.json();
+}
+
+export async function createTenantAdmin(token, { email, password, tenantId }) {
+  const res = await fetch(`${API_BASE}/api/platform-admin/users`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password, role: "TENANT_ADMIN", tenantId: Number(tenantId) }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || "Failed to create admin");
+  }
+  return res.json();
+}
+
+export async function resetBlocks(token) {
+  const res = await fetch(`${API_BASE}/api/platform-admin/reset-blocks`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("Failed to reset blocks");
+  return res.json();
+}

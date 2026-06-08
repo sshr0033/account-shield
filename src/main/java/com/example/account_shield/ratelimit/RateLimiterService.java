@@ -50,4 +50,12 @@ public class RateLimiterService {
         String value = redis.opsForValue().get(keyFor(ip));
         return value == null ? 0 : Integer.parseInt(value);
     }
+
+    // Clear ALL rate-limit counters (admin "reset all blocks")
+    public void resetAll() {
+        var keys = redis.keys("failed_attempts:*");
+        if (keys != null && !keys.isEmpty()) {
+            redis.delete(keys);
+        }
+    }
 }

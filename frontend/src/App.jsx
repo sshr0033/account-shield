@@ -7,6 +7,8 @@ import ShieldIcon from "@mui/icons-material/Shield";
 import { login } from "./api";
 import { loginSuccess } from "./store/authSlice";
 import Dashboard from "./Dashboard";
+import AdminDashboard from "./AdminDashboard";
+
 
 export default function App() {
   const dispatch = useDispatch();
@@ -16,6 +18,7 @@ export default function App() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const role = useSelector((state) => state.auth.role);
 
   async function handleLogin(e) {
     e.preventDefault();
@@ -38,6 +41,9 @@ export default function App() {
 
   // If logged in, show the dashboard (it reads auth from Redux)
   if (isAuthenticated) {
+    if (role === "PLATFORM_ADMIN") return <AdminDashboard />;
+    if (role === "FRAUD_ANALYST") return <Dashboard />;
+    // fallback for other roles (TENANT_ADMIN, MEMBER) for now
     return <Dashboard />;
   }
 
