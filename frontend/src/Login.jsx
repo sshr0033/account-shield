@@ -54,6 +54,12 @@ export default function Login() {
           <Button type="submit" variant="contained" fullWidth size="large" disabled={loading}>
             {loading ? <CircularProgress size={24} /> : "Sign in"}
           </Button>
+          <Typography variant="body2" sx={{ mt: 2, color: "#64748b", textAlign: "center" }}>
+            New fund?{" "}
+            <span style={{ color: "#3b82f6", cursor: "pointer" }} onClick={() => navigate("/request-access")}>
+              Request access
+            </span>
+          </Typography>
         </Box>
       </Card>
     </Box>

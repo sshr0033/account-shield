@@ -5,6 +5,7 @@ import Dashboard from "./Dashboard";
 import AdminDashboard from "./AdminDashboard";
 import TenantAdminDashboard from "./TenantAdminDashboard";
 import ProtectedRoute, { dashboardPathForRole } from "./ProtectedRoute";
+import RequestAccess from "./RequestAccess";
 
 export default function App() {
   const { isAuthenticated, role } = useSelector((state) => state.auth);
@@ -12,6 +13,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/request-access" element={<RequestAccess />} />
 
       <Route path="/analyst" element={
         <ProtectedRoute allowedRole="FRAUD_ANALYST"><Dashboard /></ProtectedRoute>
