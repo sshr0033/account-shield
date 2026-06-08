@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { getAlerts, explainAlert, getLoginAttempts } from "./api";
 import {
   Box, Drawer, Typography, Button, Card, CardContent,
   Table, TableBody, TableCell, TableHead, TableRow, Chip, Paper,
@@ -11,6 +10,7 @@ import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { logout } from "./store/authSlice";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
+import { getAlerts, explainAlert, getLoginAttempts, resolveAlert, blockForeverAlert, releaseBlockAlert } from "./api";
 
 const DRAWER_WIDTH = 230;
 
@@ -47,6 +47,17 @@ export default function Dashboard() {
     }
   }
 
+  async function handleAction(actionFn, alertId, label) {
+    try {
+      await actionFn(token, alertId);
+      // refresh alerts so the status updates
+      const data = await getAlerts(token);
+      setAlerts(data);
+    } catch (err) {
+      setError(`${label} failed: ${err.message}`);
+    }
+  }
+
   async function handleExplain(alertId) {
     setExplaining(alertId);
     try {
@@ -58,6 +69,7 @@ export default function Dashboard() {
       setExplaining(null);
     }
   }
+  
 
   const severityColor = (sev) =>
     sev === "HIGH" ? "error" : sev === "MEDIUM" ? "warning" : "success";
@@ -140,15 +152,24 @@ export default function Dashboard() {
                       <TableCell sx={{ color: "#94a3b8", fontSize: 13 }}>{a.details}</TableCell>
                       <TableCell><Typography variant="caption">{a.status}</Typography></TableCell>
                       <TableCell>
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          startIcon={<WarningAmberIcon />}
-                          onClick={() => handleExplain(a.id)}
-                          disabled={explaining === a.id}
-                        >
-                          {explaining === a.id ? "…" : "Explain"}
-                        </Button>
+                        <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                          <Button size="small" variant="outlined" startIcon={<WarningAmberIcon />}
+                            onClick={() => handleExplain(a.id)} disabled={explaining === a.id}>
+                            {explaining === a.id ? "…" : "Explain"}
+                          </Button>
+                          <Button size="small" variant="outlined" color="success"
+                            onClick={() => handleAction(resolveAlert, a.id, "Resolve")}>
+                            Resolve
+                          </Button>
+                          <Button size="small" variant="outlined" color="error"
+                            onClick={() => handleAction(blockForeverAlert, a.id, "Block")}>
+                            Block Forever
+                          </Button>
+                          <Button size="small" variant="outlined" color="warning"
+                            onClick={() => handleAction(releaseBlockAlert, a.id, "Release")}>
+                            Release
+                          </Button>
+                        </Box>
                       </TableCell>
                     </TableRow>
                     <TableRow>

@@ -120,6 +120,30 @@ export async function resetMemberBlock(token, id) {
   });
   if (!res.ok) throw new Error("Failed to reset block");
   return res.json();
+
+}
+export async function resolveAlert(token, id) {
+  const res = await fetch(`${API_BASE}/api/analyst/alerts/${id}/resolve`, {
+    method: "POST", headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("Failed to resolve");
+  return res.json();
+}
+
+export async function blockForeverAlert(token, id) {
+  const res = await fetch(`${API_BASE}/api/analyst/alerts/${id}/block-forever`, {
+    method: "POST", headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("Failed to block");
+  return res.json();
+}
+
+export async function releaseBlockAlert(token, id) {
+  const res = await fetch(`${API_BASE}/api/analyst/alerts/${id}/release-block`, {
+    method: "POST", headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("Failed to release block");
+  return res.json();
 }
 
 export async function deleteUser(token, userId) {
