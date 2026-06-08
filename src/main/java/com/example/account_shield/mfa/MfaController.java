@@ -26,7 +26,7 @@ public class MfaController {
     @PostMapping("/enroll")
     public ResponseEntity<?> enroll(Authentication authentication) {
         // who is logged in? their email is the JWT subject
-        String email = authentication.getName();
+        String email = ((com.example.account_shield.entity.User) authentication.getPrincipal()).getEmail();
 
         Optional<User> opt = users.findByEmail(email);
         if (opt.isEmpty()) {

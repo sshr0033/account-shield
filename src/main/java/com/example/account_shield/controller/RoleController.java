@@ -12,7 +12,7 @@ public class RoleController {
     public Map<String, Object> me(Authentication auth) {
         if (auth == null) return Map.of("authenticated", false);
         return Map.of("authenticated", true,
-                "email", auth.getName(),
+                "email", ((com.example.account_shield.entity.User) auth.getPrincipal()).getEmail(),
                 "authorities", auth.getAuthorities().toString());
     }
 
