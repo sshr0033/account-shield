@@ -29,3 +29,11 @@ export async function explainAlert(token, alertId) {
   if (!res.ok) throw new Error("Failed to explain alert");
   return res.json(); // { alertId, explanation }
 }
+
+export async function getLoginAttempts(token) {
+  const res = await fetch(`${API_BASE}/api/analyst/login-attempts`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("Failed to load login activity");
+  return res.json();
+}

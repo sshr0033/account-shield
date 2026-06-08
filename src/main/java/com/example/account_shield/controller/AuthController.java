@@ -5,6 +5,7 @@ import com.example.account_shield.domain.Role;
 import com.example.account_shield.entity.LoginAttempt;
 import com.example.account_shield.entity.User;
 import com.example.account_shield.mfa.MfaService;
+import com.example.account_shield.ratelimit.RateLimiterService;
 import com.example.account_shield.repository.LoginAttemptRepository;
 import com.example.account_shield.repository.UserRepository;
 import com.example.account_shield.security.JwtService;
@@ -28,21 +29,22 @@ public class AuthController {
     private final LoginAttemptRepository loginAttempts;
 
     private final LoginAttemptProducer producer;
-
+    private final RateLimiterService rateLimiter;
     private final MfaService mfa ;
 
 
     public AuthController(UserRepository users,
                           PasswordEncoder encoder,
                           JwtService jwt,
-
-                          LoginAttemptRepository loginAttempts, LoginAttemptProducer producer, MfaService mfa) {
+                          RateLimiterService rateLimiter,
+                          LoginAttemptRepository loginAttempts,
+                          LoginAttemptProducer producer, MfaService mfa) {
 
         this.users = users;
         this.encoder = encoder;
         this.jwt = jwt;
         this.loginAttempts = loginAttempts;
-
+        this.rateLimiter = rateLimiter;
         this.producer = producer;
 
         this.mfa= mfa;
@@ -62,11 +64,20 @@ public class AuthController {
         return ResponseEntity.ok(new AuthResponse(jwt.generate(u), u.getRole().name(), u.getEmail()));
     }
 
+
+
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest req, HttpServletRequest httpReq) {
         String ip = extractClientIp(httpReq);
-        Optional<User> opt = users.findByEmail(req.email());
 
+        // Rate-limit check: if this IP has failed too many times, block immediately
+        if (rateLimiter.isBlocked(ip)) {
+            return ResponseEntity.status(429).body(Map.of(
+                    "error", "Too many failed attempts. This IP is temporarily blocked. Try again later."
+            ));
+        }
+
+        Optional<User> opt = users.findByEmail(req.email());
         boolean success = opt.isPresent()
                 && encoder.matches(req.password(), opt.get().getPasswordHash());
 
@@ -75,8 +86,12 @@ public class AuthController {
                 opt.map(User::getId).orElse(null));
 
         if (!success) {
+            rateLimiter.recordFailure(ip);   // increment the Redis counter
             return ResponseEntity.status(401).body(Map.of("error", "invalid credentials"));
         }
+
+        // success — clear any failure counter for this IP
+        rateLimiter.reset(ip);
 
         User u = opt.get();
 

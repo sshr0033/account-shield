@@ -1,6 +1,9 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-const initialState = {
+// Load saved auth from localStorage on startup
+const saved = JSON.parse(localStorage.getItem("auth") || "null");
+
+const initialState = saved || {
   token: null,
   email: null,
   role: null,
@@ -16,12 +19,14 @@ const authSlice = createSlice({
       state.email = action.payload.email;
       state.role = action.payload.role;
       state.isAuthenticated = true;
+      localStorage.setItem("auth", JSON.stringify(state));
     },
     logout: (state) => {
       state.token = null;
       state.email = null;
       state.role = null;
       state.isAuthenticated = false;
+      localStorage.removeItem("auth");
     },
   },
 });
