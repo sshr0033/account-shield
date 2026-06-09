@@ -51,7 +51,36 @@ public class MfaController {
                 "qrCode", qrDataUri
         ));
     }
+    @PostMapping("/confirm")
+    public ResponseEntity<?> confirmMfa(
+            Authentication authentication,
+            @RequestBody Map<String, String> body) {
 
+        String email = ((User) authentication.getPrincipal()).getEmail();
+        Optional<User> opt = users.findByEmail(email);
+
+        if (opt.isEmpty()) {
+            return ResponseEntity.status(404).body(Map.of("error", "user not found"));
+        }
+
+        User user = opt.get();
+        String code = body.get("mfaCode");
+
+        // Verify the code against the secret
+        if (!mfa.verifyCode(user.getMfaSecret(), code)) {
+            return ResponseEntity.status(401).body(Map.of("error", "invalid MFA code"));
+        }
+
+        // Code is valid - MFA is now confirmed and enabled
+        // (Note: it may already be enabled from /enroll, but this confirms it works)
+        user.setMfaEnabled(true);
+        users.save(user);
+
+        return ResponseEntity.ok(Map.of(
+                "message", "MFA confirmed and enabled",
+                "success", true
+        ));
+    }
     @PostMapping("/verify")
     public ResponseEntity<?> verify(
             Authentication authentication,
