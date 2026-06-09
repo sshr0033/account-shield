@@ -5,6 +5,7 @@ import com.example.account_shield.repository.UserRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -48,6 +49,37 @@ public class MfaController {
         return ResponseEntity.ok(Map.of(
                 "message", "Scan this QR code with your authenticator app",
                 "qrCode", qrDataUri
+        ));
+    }
+
+    @PostMapping("/verify")
+    public ResponseEntity<?> verify(
+            Authentication authentication,
+            @RequestBody Map<String, String> body) {
+
+        String mfaCode = body.get("mfaCode");
+        if (mfaCode == null || mfaCode.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "MFA code required"));
+        }
+
+        String email = ((User) authentication.getPrincipal()).getEmail();
+        Optional<User> opt = users.findByEmail(email);
+
+        if (opt.isEmpty()) {
+            return ResponseEntity.status(404).body(Map.of("error", "user not found"));
+        }
+
+        User user = opt.get();
+
+        // Verify the code
+        if (!mfa.verifyCode(user.getMfaSecret(), mfaCode)) {
+            return ResponseEntity.status(401).body(Map.of("error", "invalid MFA code"));
+        }
+
+        // Code is valid, MFA is already enabled (set during enroll)
+        return ResponseEntity.ok(Map.of(
+                "message", "MFA verified and enabled",
+                "mfaEnabled", user.isMfaEnabled()
         ));
     }
 }
