@@ -3,14 +3,16 @@ import { useSelector, useDispatch } from "react-redux";
 import {
   Box, Drawer, Typography, Button, Card, CardContent,
   Table, TableBody, TableCell, TableHead, TableRow, Chip, Paper,
-  CircularProgress, Collapse,IconButton,
+  CircularProgress, Collapse,IconButton, Alert,
 } from "@mui/material";
 import ShieldIcon from "@mui/icons-material/Shield";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+import SecurityIcon from "@mui/icons-material/Security";
 import { logout } from "./store/authSlice";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import { getAlerts, explainAlert, getLoginAttempts, resolveAlert, blockForeverAlert, releaseBlockAlert } from "./api";
+import MFASetup from "./MFASetup";
 
 const DRAWER_WIDTH = 230;
 
@@ -25,9 +27,21 @@ export default function Dashboard() {
   const [explanations, setExplanations] = useState({});
   const [attempts, setAttempts] = useState([]);
   const [showActivity, setShowActivity] = useState(true);
+  
+  // MFA state
+  const [showMfaSetup, setShowMfaSetup] = useState(false);
+  const [mfaSetupSuccess, setMfaSetupSuccess] = useState(false);
 
   useEffect(() => {
     loadAlerts();
+    
+    // Check if analyst needs to set up MFA (first time login)
+    // You can detect this from localStorage or a flag from the backend
+    const hasDismissedMfa = localStorage.getItem(`mfa-setup-${email}`);
+    if (role === "FRAUD_ANALYST" && !hasDismissedMfa && !mfaSetupSuccess) {
+      // Show MFA setup on first login for analysts
+      setShowMfaSetup(true);
+    }
   }, []);
 
   async function loadAlerts() {
@@ -70,12 +84,33 @@ export default function Dashboard() {
     }
   }
   
+  function handleMfaSetupSuccess() {
+    setMfaSetupSuccess(true);
+    setShowMfaSetup(false);
+    localStorage.setItem(`mfa-setup-${email}`, "true");
+  }
+
+  function handleDismissMfa() {
+    localStorage.setItem(`mfa-setup-${email}`, "dismissed");
+    setShowMfaSetup(false);
+  }
 
   const severityColor = (sev) =>
     sev === "HIGH" ? "error" : sev === "MEDIUM" ? "warning" : "success";
 
   return (
     <Box sx={{ display: "flex", minHeight: "100vh" }}>
+      {/* MFA Setup Modal */}
+      {role === "FRAUD_ANALYST" && (
+        <MFASetup
+          token={token}
+          email={email}
+          open={showMfaSetup}
+          onClose={handleDismissMfa}
+          onSuccess={handleMfaSetupSuccess}
+        />
+      )}
+
       {/* Sidebar */}
       <Drawer
         variant="permanent"
@@ -115,6 +150,16 @@ export default function Dashboard() {
             </Button>
           </Box>
         </Box>
+
+        {/* MFA Setup Alert for Analysts */}
+        {role === "FRAUD_ANALYST" && mfaSetupSuccess && (
+          <Alert severity="success" sx={{ mb: 3 }} onClose={handleDismissMfa}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <SecurityIcon fontSize="small" />
+              <span>Two-factor authentication is now enabled on your account!</span>
+            </Box>
+          </Alert>
+        )}
 
         {/* Stat cards */}
         <Box sx={{ display: "flex", gap: 2, mb: 4 }}>
