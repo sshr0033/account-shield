@@ -1,16 +1,53 @@
-const API_BASE = "http://localhost:8080";
-
-export async function login(email, password) {
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8080";
+export async function login(email, password, mfaCode = null) {
+  const body = { email, password };
+  if (mfaCode) {
+    body.mfaCode = mfaCode;
+  }
+  
   const res = await fetch(`${API_BASE}/api/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify(body),
   });
+  
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
+    // If MFA is required, return the flag instead of throwing
+    if (res.status === 401 && err.mfaRequired) {
+      return { mfaRequired: true };
+    }
     throw new Error(err.error || "Login failed");
   }
   return res.json(); // { token, role, email }
+}
+
+export async function enrollMfa(token) {
+  const res = await fetch(`${API_BASE}/api/me/mfa/enroll`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || "Failed to enroll MFA");
+  }
+  return res.json(); // { message, qrCode, secret? }
+}
+
+export async function confirmMfaSetup(token, mfaCode) {
+  const res = await fetch(`${API_BASE}/api/me/mfa/confirm`, {
+    method: "POST",
+    headers: { 
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}` 
+    },
+    body: JSON.stringify({ mfaCode }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || "Failed to confirm MFA setup");
+  }
+  return res.json();
 }
 
 export async function getAlerts(token) {

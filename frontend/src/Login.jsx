@@ -6,6 +6,7 @@ import ShieldIcon from "@mui/icons-material/Shield";
 import { login } from "./api";
 import { loginSuccess } from "./store/authSlice";
 import { dashboardPathForRole } from "./ProtectedRoute";
+import MFAVerification from "./MFAVerification";
 
 export default function Login() {
   const dispatch = useDispatch();
@@ -16,6 +17,12 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  
+  // MFA state
+  const [mfaPending, setMfaPending] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState("");
+  const [mfaError, setMfaError] = useState("");
+  const [mfaLoading, setMfaLoading] = useState(false);
 
   // If already logged in, redirect to the right dashboard
   useEffect(() => {
@@ -28,6 +35,18 @@ export default function Login() {
     setLoading(true);
     try {
       const result = await login(email, password);
+      
+      // Check if MFA is required
+      if (result.mfaRequired) {
+        // Stay on login, show MFA verification step
+        setMfaPending(true);
+        setPendingEmail(email);
+        setMfaError("");
+        setLoading(false);
+        return;
+      }
+      
+      // No MFA required, proceed with login
       dispatch(loginSuccess({ token: result.token, email: result.email, role: result.role }));
       navigate(dashboardPathForRole(result.role), { replace: true });
     } catch (err) {
@@ -37,6 +56,41 @@ export default function Login() {
     }
   }
 
+  async function handleMfaVerify(mfaCode) {
+    setMfaError("");
+    setMfaLoading(true);
+    try {
+      const result = await login(pendingEmail, password, mfaCode);
+      dispatch(loginSuccess({ token: result.token, email: result.email, role: result.role }));
+      navigate(dashboardPathForRole(result.role), { replace: true });
+    } catch (err) {
+      setMfaError(err.message);
+    } finally {
+      setMfaLoading(false);
+    }
+  }
+
+  function handleMfaBack() {
+    setMfaPending(false);
+    setPendingEmail("");
+    setMfaError("");
+    setPassword("");
+  }
+
+  // Show MFA verification screen
+  if (mfaPending) {
+    return (
+      <MFAVerification
+        email={pendingEmail}
+        onVerify={handleMfaVerify}
+        onBack={handleMfaBack}
+        loading={mfaLoading}
+        error={mfaError}
+      />
+    );
+  }
+
+  // Show login screen
   return (
     <Box sx={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
       <Card sx={{ p: 5, width: 380, border: "1px solid #1f2937" }}>
@@ -48,8 +102,8 @@ export default function Login() {
           Fraud Detection Console
         </Typography>
         <Box component="form" onSubmit={handleLogin} sx={{ mt: 4 }}>
-          <TextField label="Email" type="email" fullWidth value={email} onChange={(e) => setEmail(e.target.value)} sx={{ mb: 2.5 }} />
-          <TextField label="Password" type="password" fullWidth value={password} onChange={(e) => setPassword(e.target.value)} sx={{ mb: 2.5 }} />
+          <TextField label="Email" type="email" fullWidth value={email} onChange={(e) => setEmail(e.target.value)} sx={{ mb: 2.5 }} disabled={loading} />
+          <TextField label="Password" type="password" fullWidth value={password} onChange={(e) => setPassword(e.target.value)} sx={{ mb: 2.5 }} disabled={loading} />
           {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
           <Button type="submit" variant="contained" fullWidth size="large" disabled={loading}>
             {loading ? <CircularProgress size={24} /> : "Sign in"}
