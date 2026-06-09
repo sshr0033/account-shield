@@ -14,6 +14,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import com.example.account_shield.alert.DetectionService;
+import org.springframework.beans.factory.annotation.Value;
 
 
 import java.util.Map;
@@ -31,24 +33,30 @@ public class AuthController {
     private final LoginAttemptProducer producer;
     private final RateLimiterService rateLimiter;
     private final MfaService mfa ;
+    private final DetectionService detection;
 
+    @Value("${detection.mode:kafka}")
+    private String detectionMode;
 
     public AuthController(UserRepository users,
                           PasswordEncoder encoder,
                           JwtService jwt,
                           RateLimiterService rateLimiter,
                           LoginAttemptRepository loginAttempts,
-                          LoginAttemptProducer producer, MfaService mfa) {
-
+                          LoginAttemptProducer producer,
+                          MfaService mfa,
+                          DetectionService detection) {
         this.users = users;
         this.encoder = encoder;
         this.jwt = jwt;
         this.loginAttempts = loginAttempts;
         this.rateLimiter = rateLimiter;
         this.producer = producer;
-
-        this.mfa= mfa;
+        this.mfa = mfa;
+        this.detection = detection;
     }
+
+
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest req) {
@@ -123,9 +131,15 @@ public class AuthController {
         attempt.setUserId(userId);
 
         LoginAttempt saved = loginAttempts.save(attempt);
-        producer.publishAttemptId(saved.getId());
-    }
 
+        if ("sync".equalsIgnoreCase(detectionMode)) {
+            // Synchronous detection — no Kafka (used for lean cloud deploy)
+            detection.analyzeAttempt(saved);
+        } else {
+            // Async detection via Kafka (default — local/full stack)
+            producer.publishAttemptId(saved.getId());
+        }
+    }
     private String extractClientIp(HttpServletRequest request) {
         String forwarded = request.getHeader("X-Forwarded-For");
         if (forwarded != null && !forwarded.isBlank()) {
