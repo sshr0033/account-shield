@@ -1,4 +1,4 @@
-const API_BASE = "http://localhost:8080";
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8080";
 
 // A single login attempt against Account Shield
 export async function attemptLogin(email, password) {

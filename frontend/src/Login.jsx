@@ -1,12 +1,15 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { Box, Card, TextField, Button, Typography, Alert, CircularProgress } from "@mui/material";
+import { Box, Card, TextField, Button, Typography, Alert, CircularProgress, Divider } from "@mui/material";
 import ShieldIcon from "@mui/icons-material/Shield";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import { login } from "./api";
 import { loginSuccess } from "./store/authSlice";
 import { dashboardPathForRole } from "./ProtectedRoute";
 import MFAVerification from "./MFAVerification";
+
+const DEMO_FUND_URL = import.meta.env.VITE_DEMO_FUND_URL || "http://localhost:5174";
 
 export default function Login() {
   const dispatch = useDispatch();
@@ -38,7 +41,6 @@ export default function Login() {
       
       // Check if MFA is required
       if (result.mfaRequired) {
-        // Stay on login, show MFA verification step
         setMfaPending(true);
         setPendingEmail(email);
         setMfaError("");
@@ -46,7 +48,6 @@ export default function Login() {
         return;
       }
       
-      // No MFA required, proceed with login
       dispatch(loginSuccess({ token: result.token, email: result.email, role: result.role }));
       navigate(dashboardPathForRole(result.role), { replace: true });
     } catch (err) {
@@ -113,6 +114,21 @@ export default function Login() {
             <span style={{ color: "#3b82f6", cursor: "pointer" }} onClick={() => navigate("/request-access")}>
               Request access
             </span>
+          </Typography>
+
+          <Divider sx={{ my: 3, borderColor: "#1f2937" }} />
+
+          <Button
+            variant="outlined"
+            fullWidth
+            endIcon={<OpenInNewIcon fontSize="small" />}
+            onClick={() => window.open(DEMO_FUND_URL, "_blank")}
+            sx={{ borderColor: "#1f2937", color: "#64748b", "&:hover": { borderColor: "#3b82f6", color: "#3b82f6" } }}
+          >
+            Try the Demo Fund
+          </Button>
+          <Typography variant="caption" sx={{ display: "block", textAlign: "center", mt: 1, color: "#475569" }}>
+            Simulate attacks, then log in as analyst to see alerts
           </Typography>
         </Box>
       </Card>
