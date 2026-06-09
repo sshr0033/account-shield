@@ -18,6 +18,8 @@ spring:
     consumer:
       group-id: account-shield-detection
       auto-offset-reset: earliest
+    listener:
+      auto-startup: ${KAFKA_ENABLED:true}
   flyway:
     enabled: true
   data:
