@@ -24,6 +24,10 @@ public class DataSeeder implements CommandLineRunner {
         seed("analyst@demo.test", "Analyst123!", Role.FRAUD_ANALYST);
         seed("tenant-admin@demo.test", "TenantAdmin123!", Role.TENANT_ADMIN);
         seed("platform-admin@demo.test", "PlatformAdmin123!", Role.PLATFORM_ADMIN);
+
+        disableMfa("analyst@demo.test");
+        disableMfa("platform-admin@demo.test");
+        disableMfa("member@demo.test");
     }
 
     private void seed(String email, String rawPassword, Role role) {
@@ -34,5 +38,16 @@ public class DataSeeder implements CommandLineRunner {
         u.setPasswordHash(encoder.encode(rawPassword));
         u.setRole(role);
         users.save(u);
+    }
+
+
+    private void disableMfa(String email) {
+        users.findByEmail(email).ifPresent(u -> {
+            if (u.isMfaEnabled()) {
+                u.setMfaEnabled(false);
+                u.setMfaSecret(null);
+                users.save(u);
+            }
+        });
     }
 }
