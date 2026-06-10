@@ -57,6 +57,13 @@ export async function getAlerts(token) {
   if (!res.ok) throw new Error("Failed to load alerts");
   return res.json();
 }
+export async function getMe(token) {
+  const res = await fetch(`${API_BASE}/api/me`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("Failed to fetch user");
+  return res.json();
+}
 
 export async function explainAlert(token, alertId) {
   const res = await fetch(`${API_BASE}/api/analyst/alerts/${alertId}/explain`, {
