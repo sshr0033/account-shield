@@ -1,0 +1,130 @@
+<svg width="900" height="720" viewBox="0 0 900 720" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif">
+  <title>Account Shield — System Architecture</title>
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="#475569" stroke-width="1.5" stroke-linecap="round"/>
+    </marker>
+  </defs>
+  <rect width="900" height="720" fill="#0f172a"/>
+  <text x="450" y="28" text-anchor="middle" font-size="18" font-weight="700" fill="#f1f5f9">System Architecture — Production Deployment</text>
+
+  <!-- Internet zone -->
+  <rect x="20" y="42" width="860" height="100" rx="10" fill="none" stroke="#334155" stroke-width="1" stroke-dasharray="5 3"/>
+  <text x="36" y="60" font-size="10" fill="#64748b" letter-spacing="1">INTERNET</text>
+
+  <rect x="40" y="64" width="120" height="64" rx="8" fill="#1d4ed8" stroke="#3b82f6" stroke-width="1"/>
+  <text x="100" y="88" text-anchor="middle" font-size="12" font-weight="600" fill="#eff6ff">Browser</text>
+  <text x="100" y="106" text-anchor="middle" font-size="10" fill="#93c5fd">Melbourne</text>
+
+  <rect x="180" y="64" width="160" height="64" rx="8" fill="#0f766e" stroke="#14b8a6" stroke-width="1"/>
+  <text x="260" y="88" text-anchor="middle" font-size="12" font-weight="600" fill="#f0fdfa">Fraud Console</text>
+  <text x="260" y="106" text-anchor="middle" font-size="10" fill="#99f6e4">Render Static Site · HTTPS</text>
+
+  <rect x="360" y="64" width="180" height="64" rx="8" fill="#0f766e" stroke="#14b8a6" stroke-width="1"/>
+  <text x="450" y="88" text-anchor="middle" font-size="12" font-weight="600" fill="#f0fdfa">Demo Super Fund</text>
+  <text x="450" y="106" text-anchor="middle" font-size="10" fill="#99f6e4">Render Static Site · HTTPS</text>
+
+  <rect x="560" y="64" width="140" height="64" rx="8" fill="#6d28d9" stroke="#8b5cf6" stroke-width="1"/>
+  <text x="630" y="88" text-anchor="middle" font-size="12" font-weight="600" fill="#f5f3ff">CDN / Edge</text>
+  <text x="630" y="106" text-anchor="middle" font-size="10" fill="#c4b5fd">Global cache</text>
+
+  <rect x="720" y="64" width="140" height="64" rx="8" fill="#374151" stroke="#6b7280" stroke-width="1"/>
+  <text x="790" y="88" text-anchor="middle" font-size="12" font-weight="600" fill="#f9fafb">TLS 1.3 + JWT</text>
+  <text x="790" y="106" text-anchor="middle" font-size="10" fill="#9ca3af">HS256 · 1hr expiry</text>
+
+  <!-- Arrow down -->
+  <line x1="260" y1="128" x2="260" y2="158" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="450" y1="128" x2="450" y2="158" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="272" y="147" font-size="10" fill="#64748b">HTTPS API</text>
+
+  <!-- Render zone -->
+  <rect x="20" y="162" width="860" height="220" rx="10" fill="none" stroke="#334155" stroke-width="1" stroke-dasharray="5 3"/>
+  <text x="36" y="180" font-size="10" fill="#64748b" letter-spacing="1">RENDER — SINGAPORE REGION</text>
+
+  <!-- Spring Boot box -->
+  <rect x="40" y="188" width="840" height="100" rx="8" fill="#1e293b" stroke="#6d28d9" stroke-width="1"/>
+  <text x="56" y="206" font-size="10" fill="#64748b">Web Service (Docker · Java 21 · Tomcat 11)</text>
+  <rect x="60" y="212" width="130" height="52" rx="6" fill="#374151" stroke="#6b7280" stroke-width="1"/>
+  <text x="125" y="234" text-anchor="middle" font-size="11" font-weight="600" fill="#f9fafb">Spring Boot 4</text>
+  <text x="125" y="250" text-anchor="middle" font-size="10" fill="#9ca3af">Tomcat 11</text>
+
+  <rect x="206" y="212" width="130" height="52" rx="6" fill="#374151" stroke="#6b7280" stroke-width="1"/>
+  <text x="271" y="234" text-anchor="middle" font-size="11" font-weight="600" fill="#f9fafb">Spring Security</text>
+  <text x="271" y="250" text-anchor="middle" font-size="10" fill="#9ca3af">JWT · RBAC</text>
+
+  <rect x="352" y="212" width="130" height="52" rx="6" fill="#78350f" stroke="#f59e0b" stroke-width="1"/>
+  <text x="417" y="234" text-anchor="middle" font-size="11" font-weight="600" fill="#fef3c7">Detection Engine</text>
+  <text x="417" y="250" text-anchor="middle" font-size="10" fill="#fde68a">sync mode</text>
+
+  <rect x="498" y="212" width="150" height="52" rx="6" fill="#4c1d95" stroke="#8b5cf6" stroke-width="1"/>
+  <text x="573" y="234" text-anchor="middle" font-size="11" font-weight="600" fill="#f5f3ff">MFA + Rate Limit</text>
+  <text x="573" y="250" text-anchor="middle" font-size="10" fill="#c4b5fd">TOTP · Redis client</text>
+
+  <rect x="664" y="212" width="196" height="52" rx="6" fill="#14532d" stroke="#22c55e" stroke-width="1"/>
+  <text x="762" y="234" text-anchor="middle" font-size="11" font-weight="600" fill="#f0fdf4">Gemini Integration</text>
+  <text x="762" y="250" text-anchor="middle" font-size="10" fill="#86efac">AI triage · fallback</text>
+
+  <text x="450" y="300" text-anchor="middle" font-size="10" fill="#64748b">DETECTION_MODE=sync · KAFKA_ENABLED=false · Flyway migrations on boot · DataSeeder creates 4 demo users</text>
+
+  <!-- Arrows to data -->
+  <line x1="300" y1="382" x2="200" y2="402" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="600" y1="382" x2="700" y2="402" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- Data tier -->
+  <rect x="20" y="386" width="420" height="120" rx="10" fill="none" stroke="#334155" stroke-width="1" stroke-dasharray="5 3"/>
+  <text x="36" y="404" font-size="10" fill="#64748b" letter-spacing="1">RENDER POSTGRESQL 16</text>
+  <rect x="40" y="410" width="170" height="82" rx="8" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1"/>
+  <text x="125" y="434" text-anchor="middle" font-size="12" font-weight="600" fill="#eff6ff">app_users</text>
+  <text x="125" y="450" text-anchor="middle" font-size="10" fill="#93c5fd">tenants · enquiries</text>
+  <text x="125" y="466" text-anchor="middle" font-size="10" fill="#93c5fd">Flyway managed</text>
+  <rect x="228" y="410" width="190" height="82" rx="8" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1"/>
+  <text x="323" y="434" text-anchor="middle" font-size="12" font-weight="600" fill="#eff6ff">login_attempts</text>
+  <text x="323" y="450" text-anchor="middle" font-size="10" fill="#93c5fd">alerts</text>
+  <text x="323" y="466" text-anchor="middle" font-size="10" fill="#93c5fd">Full audit trail</text>
+
+  <rect x="460" y="386" width="420" height="120" rx="10" fill="none" stroke="#334155" stroke-width="1" stroke-dasharray="5 3"/>
+  <text x="476" y="404" font-size="10" fill="#64748b" letter-spacing="1">UPSTASH REDIS (SINGAPORE · SSL)</text>
+  <rect x="480" y="410" width="180" height="82" rx="8" fill="#7f1d1d" stroke="#ef4444" stroke-width="1"/>
+  <text x="570" y="434" text-anchor="middle" font-size="12" font-weight="600" fill="#fef2f2">failed_attempts:{ip}</text>
+  <text x="570" y="450" text-anchor="middle" font-size="10" fill="#fca5a5">TTL 10 min · atomic +1</text>
+  <rect x="678" y="410" width="182" height="82" rx="8" fill="#7f1d1d" stroke="#ef4444" stroke-width="1"/>
+  <text x="769" y="434" text-anchor="middle" font-size="12" font-weight="600" fill="#fef2f2">permanent_block:{ip}</text>
+  <text x="769" y="450" text-anchor="middle" font-size="10" fill="#fca5a5">No TTL · analyst set</text>
+  <text x="769" y="466" text-anchor="middle" font-size="10" fill="#fca5a5">admin release</text>
+
+  <!-- Local only box -->
+  <rect x="20" y="524" width="860" height="80" rx="10" fill="none" stroke="#334155" stroke-width="1" stroke-dasharray="5 3"/>
+  <text x="36" y="542" font-size="10" fill="#64748b" letter-spacing="1">LOCAL FULL-STACK ONLY (Docker Compose)</text>
+  <rect x="40" y="550" width="160" height="40" rx="6" fill="#374151" stroke="#6b7280" stroke-width="1"/>
+  <text x="120" y="568" text-anchor="middle" font-size="11" font-weight="600" fill="#f9fafb">Kafka 4.1 + Zookeeper</text>
+  <text x="120" y="582" text-anchor="middle" font-size="10" fill="#9ca3af">localhost:9092</text>
+  <rect x="220" y="550" width="150" height="40" rx="6" fill="#374151" stroke="#6b7280" stroke-width="1"/>
+  <text x="295" y="568" text-anchor="middle" font-size="11" font-weight="600" fill="#f9fafb">Login Producer</text>
+  <text x="295" y="582" text-anchor="middle" font-size="10" fill="#9ca3af">login-attempts topic</text>
+  <rect x="390" y="550" width="150" height="40" rx="6" fill="#374151" stroke="#6b7280" stroke-width="1"/>
+  <text x="465" y="568" text-anchor="middle" font-size="11" font-weight="600" fill="#f9fafb">Login Consumer</text>
+  <text x="465" y="582" text-anchor="middle" font-size="10" fill="#9ca3af">@KafkaListener</text>
+  <rect x="560" y="550" width="160" height="40" rx="6" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1"/>
+  <text x="640" y="568" text-anchor="middle" font-size="11" font-weight="600" fill="#eff6ff">PostgreSQL + Redis</text>
+  <text x="640" y="582" text-anchor="middle" font-size="10" fill="#93c5fd">Docker containers</text>
+  <rect x="740" y="550" width="120" height="40" rx="6" fill="#374151" stroke="#6b7280" stroke-width="1"/>
+  <text x="800" y="568" text-anchor="middle" font-size="11" font-weight="600" fill="#f9fafb">DETECTION_MODE</text>
+  <text x="800" y="582" text-anchor="middle" font-size="10" fill="#9ca3af">=kafka</text>
+
+  <!-- Port legend -->
+  <rect x="20" y="622" width="860" height="80" rx="8" fill="none" stroke="#334155" stroke-width="1" stroke-dasharray="4 3"/>
+  <text x="450" y="642" text-anchor="middle" font-size="11" fill="#64748b">Port Map — Local Development</text>
+  <text x="60" y="660" font-size="10" fill="#94a3b8">Spring Boot: 8080</text>
+  <text x="220" y="660" font-size="10" fill="#94a3b8">React console: 5173</text>
+  <text x="380" y="660" font-size="10" fill="#94a3b8">Demo fund: 5174</text>
+  <text x="530" y="660" font-size="10" fill="#94a3b8">PostgreSQL: 5432</text>
+  <text x="700" y="660" font-size="10" fill="#94a3b8">Redis: 6379</text>
+  <text x="60" y="678" font-size="10" fill="#94a3b8">Kafka: 9092</text>
+  <text x="220" y="678" font-size="10" fill="#94a3b8">Zookeeper: 2181</text>
+  <text x="380" y="678" font-size="10" fill="#94a3b8">GitHub push → Render auto-deploy (CI/CD)</text>
+
+  <!-- Spring Boot box height fix -->
+  <rect x="40" y="188" width="840" height="180" rx="8" fill="#1e293b" stroke="#6d28d9" stroke-width="1" opacity="0"/>
+  <line x1="450" y1="308" x2="300" y2="386" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="450" y1="308" x2="600" y2="386" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+</svg>

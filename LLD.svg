@@ -1,0 +1,125 @@
+<svg width="900" height="900" viewBox="0 0 900 900" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif">
+  <title>Account Shield — Low-Level Design: Login and Detection Flow</title>
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="#475569" stroke-width="1.5" stroke-linecap="round"/>
+    </marker>
+    <marker id="arr-red" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="#ef4444" stroke-width="1.5" stroke-linecap="round"/>
+    </marker>
+    <marker id="arr-amber" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-linecap="round"/>
+    </marker>
+    <marker id="arr-green" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="#22c55e" stroke-width="1.5" stroke-linecap="round"/>
+    </marker>
+  </defs>
+  <rect width="900" height="900" fill="#0f172a"/>
+  <text x="450" y="36" text-anchor="middle" font-size="18" font-weight="700" fill="#f1f5f9">Low-Level Design — Login &amp; Detection Flow</text>
+
+  <!-- START -->
+  <rect x="300" y="52" width="300" height="44" rx="22" fill="#1d4ed8" stroke="#3b82f6" stroke-width="1"/>
+  <text x="450" y="80" text-anchor="middle" font-size="13" font-weight="600" fill="#eff6ff">POST /api/auth/login</text>
+
+  <line x1="450" y1="96" x2="450" y2="124" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- Rate limit check -->
+  <rect x="220" y="124" width="460" height="60" rx="8" fill="#7f1d1d" stroke="#ef4444" stroke-width="1"/>
+  <text x="450" y="150" text-anchor="middle" font-size="13" font-weight="600" fill="#fef2f2">Redis: isBlocked(ip)?</text>
+  <text x="450" y="170" text-anchor="middle" font-size="11" fill="#fca5a5">Check failed_attempts:{ip} ≥ 5 OR permanent_block:{ip} exists</text>
+
+  <line x1="680" y1="154" x2="760" y2="154" stroke="#ef4444" stroke-width="1.5" marker-end="url(#arr-red)"/>
+  <text x="694" y="148" font-size="11" fill="#ef4444">YES</text>
+  <rect x="760" y="132" width="110" height="44" rx="8" fill="#7f1d1d" stroke="#ef4444" stroke-width="1"/>
+  <text x="815" y="152" text-anchor="middle" font-size="12" font-weight="600" fill="#fef2f2">HTTP 429</text>
+  <text x="815" y="168" text-anchor="middle" font-size="11" fill="#fca5a5">Rate limited</text>
+
+  <line x1="450" y1="184" x2="450" y2="212" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="460" y="202" font-size="11" fill="#64748b">NO</text>
+
+  <!-- Credential check -->
+  <rect x="160" y="212" width="580" height="60" rx="8" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1"/>
+  <text x="450" y="238" text-anchor="middle" font-size="13" font-weight="600" fill="#eff6ff">DB: findByEmail() + BCrypt.matches()</text>
+  <text x="450" y="258" text-anchor="middle" font-size="11" fill="#93c5fd">Load user, verify password hash</text>
+
+  <line x1="740" y1="242" x2="760" y2="242" stroke="#ef4444" stroke-width="1.5" marker-end="url(#arr-red)"/>
+  <text x="742" y="236" font-size="11" fill="#ef4444">FAIL</text>
+  <rect x="760" y="220" width="110" height="60" rx="8" fill="#7f1d1d" stroke="#ef4444" stroke-width="1"/>
+  <text x="815" y="244" text-anchor="middle" font-size="12" font-weight="600" fill="#fef2f2">HTTP 401</text>
+  <text x="815" y="262" text-anchor="middle" font-size="11" fill="#fca5a5">recordFailure</text>
+
+  <line x1="450" y1="272" x2="450" y2="300" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="460" y="290" font-size="11" fill="#64748b">PASS</text>
+
+  <!-- Save attempt -->
+  <rect x="220" y="300" width="460" height="52" rx="8" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1"/>
+  <text x="450" y="322" text-anchor="middle" font-size="13" font-weight="600" fill="#eff6ff">DB: saveLoginAttempt()</text>
+  <text x="450" y="340" text-anchor="middle" font-size="11" fill="#93c5fd">Persist attempt — email · IP · success · tenantId</text>
+
+  <line x1="450" y1="352" x2="450" y2="380" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- MFA check -->
+  <rect x="200" y="380" width="500" height="60" rx="8" fill="#4c1d95" stroke="#8b5cf6" stroke-width="1"/>
+  <text x="450" y="406" text-anchor="middle" font-size="13" font-weight="600" fill="#f5f3ff">MFA: user.isMfaEnabled()? (FRAUD_ANALYST only)</text>
+  <text x="450" y="424" text-anchor="middle" font-size="11" fill="#c4b5fd">TOTP RFC 6238 · ±1 time window · verifyCode(secret, code)</text>
+
+  <line x1="700" y1="410" x2="760" y2="410" stroke="#8b5cf6" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="706" y="404" font-size="11" fill="#8b5cf6">INVALID</text>
+  <rect x="760" y="390" width="110" height="44" rx="8" fill="#4c1d95" stroke="#8b5cf6" stroke-width="1"/>
+  <text x="815" y="414" text-anchor="middle" font-size="12" font-weight="600" fill="#f5f3ff">HTTP 401</text>
+
+  <line x1="450" y1="440" x2="450" y2="468" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="460" y="458" font-size="11" fill="#64748b">NO / valid</text>
+
+  <!-- Detection mode fork -->
+  <rect x="200" y="468" width="500" height="60" rx="8" fill="#78350f" stroke="#f59e0b" stroke-width="1"/>
+  <text x="450" y="494" text-anchor="middle" font-size="13" font-weight="600" fill="#fef3c7">DETECTION_MODE check</text>
+  <text x="450" y="512" text-anchor="middle" font-size="11" fill="#fde68a">sync or kafka? (env variable)</text>
+
+  <line x1="200" y1="498" x2="120" y2="498" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#arr-amber)"/>
+  <text x="134" y="492" font-size="11" fill="#f59e0b">sync</text>
+  <rect x="30" y="476" width="88" height="44" rx="8" fill="#78350f" stroke="#f59e0b" stroke-width="1"/>
+  <text x="74" y="498" text-anchor="middle" font-size="12" font-weight="600" fill="#fef3c7">Inline call</text>
+
+  <line x1="700" y1="498" x2="760" y2="498" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#arr-amber)"/>
+  <text x="706" y="492" font-size="11" fill="#f59e0b">kafka</text>
+  <rect x="760" y="476" width="110" height="44" rx="8" fill="#374151" stroke="#6b7280" stroke-width="1"/>
+  <text x="815" y="498" text-anchor="middle" font-size="12" font-weight="600" fill="#f9fafb">Kafka publish</text>
+
+  <!-- Both converge -->
+  <path d="M74 520 L74 575 L450 575" fill="none" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+  <path d="M815 520 L815 575 L450 575" fill="none" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- Detection service -->
+  <rect x="180" y="551" width="540" height="52" rx="8" fill="#0f766e" stroke="#14b8a6" stroke-width="1"/>
+  <text x="450" y="573" text-anchor="middle" font-size="13" font-weight="600" fill="#f0fdfa">DetectionService.analyzeAttempt()</text>
+  <text x="450" y="591" text-anchor="middle" font-size="11" fill="#99f6e4">Query login_attempts for patterns within time windows</text>
+
+  <line x1="450" y1="603" x2="450" y2="631" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- Two rules -->
+  <rect x="40" y="631" width="380" height="72" rx="8" fill="#0f766e" stroke="#14b8a6" stroke-width="1"/>
+  <text x="230" y="657" text-anchor="middle" font-size="13" font-weight="600" fill="#f0fdfa">Brute Force Rule</text>
+  <text x="230" y="675" text-anchor="middle" font-size="11" fill="#99f6e4">≥5 failures / same email in 10 min</text>
+  <text x="230" y="693" text-anchor="middle" font-size="11" fill="#99f6e4">→ HIGH severity alert</text>
+
+  <rect x="440" y="631" width="420" height="72" rx="8" fill="#be185d" stroke="#ec4899" stroke-width="1"/>
+  <text x="650" y="657" text-anchor="middle" font-size="13" font-weight="600" fill="#fff1f2">Credential Stuffing Rule</text>
+  <text x="650" y="675" text-anchor="middle" font-size="11" fill="#fbcfe8">≥10 distinct emails from 1 IP in 5 min</text>
+  <text x="650" y="693" text-anchor="middle" font-size="11" fill="#fbcfe8">→ HIGH severity alert</text>
+
+  <line x1="230" y1="703" x2="230" y2="731" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="650" y1="703" x2="650" y2="731" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- Dedup -->
+  <rect x="120" y="731" width="660" height="52" rx="8" fill="#374151" stroke="#6b7280" stroke-width="1"/>
+  <text x="450" y="753" text-anchor="middle" font-size="13" font-weight="600" fill="#f9fafb">Deduplication Check</text>
+  <text x="450" y="771" text-anchor="middle" font-size="11" fill="#d1d5db">Skip if OPEN alert for same target exists within last 15 minutes</text>
+
+  <line x1="450" y1="783" x2="450" y2="811" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- Save alert + JWT -->
+  <rect x="220" y="811" width="460" height="52" rx="8" fill="#14532d" stroke="#22c55e" stroke-width="1"/>
+  <text x="450" y="833" text-anchor="middle" font-size="13" font-weight="600" fill="#f0fdf4">DB: alerts.save() + HTTP 200 JWT returned to client</text>
+  <text x="450" y="851" text-anchor="middle" font-size="11" fill="#86efac">type · severity · details · tenantId · loginAttemptId</text>
+</svg>
