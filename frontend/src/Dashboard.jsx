@@ -38,7 +38,7 @@ export default function Dashboard() {
     // Check if analyst needs to set up MFA (first time login)
     // You can detect this from localStorage or a flag from the backend
     const hasDismissedMfa = localStorage.getItem(`mfa-setup-${email}`);
-    if (role === "FRAUD_ANALYST" && !hasDismissedMfa && !mfaSetupSuccess) {
+    if (role === "TENANT_ADMIN" && !hasDismissedMfa && !mfaSetupSuccess) {
       // Show MFA setup on first login for analysts
       setShowMfaSetup(true);
     }
@@ -101,7 +101,7 @@ export default function Dashboard() {
   return (
     <Box sx={{ display: "flex", minHeight: "100vh" }}>
       {/* MFA Setup Modal */}
-      {role === "FRAUD_ANALYST" && (
+      {role === "TENANT_ADMIN" && (
         <MFASetup
           token={token}
           email={email}
@@ -152,7 +152,7 @@ export default function Dashboard() {
         </Box>
 
         {/* MFA Setup Alert for Analysts */}
-        {role === "FRAUD_ANALYST" && mfaSetupSuccess && (
+        {role === "TENANT_ADMIN" && mfaSetupSuccess && (
           <Alert severity="success" sx={{ mb: 3 }} onClose={handleDismissMfa}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <SecurityIcon fontSize="small" />
