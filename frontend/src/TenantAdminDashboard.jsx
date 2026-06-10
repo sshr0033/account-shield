@@ -4,36 +4,55 @@ import {
   Box, Drawer, Typography, Button, Chip, TextField, Paper, Alert,
   Table, TableBody, TableCell, TableHead, TableRow, List, ListItemButton,
   ListItemText, InputAdornment, Divider, IconButton, Dialog, DialogTitle,
-  DialogContent, DialogContentText, DialogActions, MenuItem,Card, CardContent,
+  DialogContent, DialogContentText, DialogActions, MenuItem, Card, CardContent,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import DeleteIcon from "@mui/icons-material/Delete";
+import SecurityIcon from "@mui/icons-material/Security";
 import { logout } from "./store/authSlice";
 import {
   getMyMembers, addMember, updateMember, deleteMember,
-  getMemberLoginAttempts, resetMemberBlock,
+  getMemberLoginAttempts, resetMemberBlock, getMe,
 } from "./api";
+import MFASetup from "./MFASetup";
 
 const DRAWER_WIDTH = 300;
 
 export default function TenantAdminDashboard() {
   const dispatch = useDispatch();
-  const { token, email, role } = useSelector((state) => state.auth);
-  const [editTarget, setEditTarget] = useState(null);
-  const [editForm, setEditForm] = useState({ email: "", role: "" });
+  const { token, email } = useSelector((state) => state.auth);
 
   const [members, setMembers] = useState([]);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState(null);
-  const [memberData, setMemberData] = useState(null); // { email, recentFailureCount, attempts }
+  const [memberData, setMemberData] = useState(null);
   const [msg, setMsg] = useState(null);
-
-  const [addOpen, setAddOpen] = useState(false);
   const [addForm, setAddForm] = useState({ email: "", password: "" });
   const [deleteTarget, setDeleteTarget] = useState(null);
-  const [editEmail, setEditEmail] = useState("");
+  const [editTarget, setEditTarget] = useState(null);
+  const [editForm, setEditForm] = useState({ email: "", role: "" });
 
-  useEffect(() => { loadMembers(); }, []);
+  // MFA state
+  const [showMfaBanner, setShowMfaBanner] = useState(false);
+  const [mfaModalOpen, setMfaModalOpen] = useState(false);
+  const [mfaSetupSuccess, setMfaSetupSuccess] = useState(false);
+
+  useEffect(() => {
+    loadMembers();
+    checkMfaStatus();
+  }, []);
+
+  async function checkMfaStatus() {
+    try {
+      const me = await getMe(token);
+      if (!me.mfaEnabled) {
+        const dismissed = localStorage.getItem(`mfa-setup-${email}`);
+        if (!dismissed) setShowMfaBanner(true);
+      }
+    } catch (e) {
+      // silently ignore
+    }
+  }
 
   async function loadMembers() {
     try { setMembers(await getMyMembers(token)); }
@@ -52,7 +71,6 @@ export default function TenantAdminDashboard() {
       await addMember(token, addForm);
       setMsg({ type: "success", text: "Member added." });
       setAddForm({ email: "", password: "" });
-      setAddOpen(false);
       loadMembers();
     } catch (e) { setMsg({ type: "error", text: e.message }); }
   }
@@ -68,7 +86,7 @@ export default function TenantAdminDashboard() {
     } catch (e) { setMsg({ type: "error", text: e.message }); }
   }
 
- async function handleEditSave() {
+  async function handleEditSave() {
     const id = editTarget.id;
     setEditTarget(null);
     try {
@@ -83,53 +101,107 @@ export default function TenantAdminDashboard() {
     try {
       await resetMemberBlock(token, selected.id);
       setMsg({ type: "success", text: `Block reset for ${selected.email}.` });
-      openMember(selected); // refresh count
+      openMember(selected);
     } catch (e) { setMsg({ type: "error", text: e.message }); }
   }
 
+  function handleMfaSuccess() {
+    setMfaSetupSuccess(true);
+    setMfaModalOpen(false);
+    setShowMfaBanner(false);
+    localStorage.setItem(`mfa-setup-${email}`, "true");
+  }
+
+  function handleMfaDismiss() {
+  localStorage.setItem(`mfa-setup-${email}`, "dismissed");
+  setShowMfaBanner(false);
+}
+function handleMfaModalClose() {
+  setMfaModalOpen(false);
+  setShowMfaBanner(true); // bring banner back
+}
   const filtered = members.filter((m) =>
     m.email.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
     <Box sx={{ display: "flex", minHeight: "100vh" }}>
-      {/* Members drawer */}
+
+      {/* MFA Modal */}
+      <MFASetup
+        token={token}
+        email={email}
+        open={mfaModalOpen}
+         onClose={handleMfaModalClose}
+        onSuccess={handleMfaSuccess}
+      />
+
+      {/* Sidebar */}
       <Drawer variant="permanent" sx={{
         width: DRAWER_WIDTH, flexShrink: 0,
-        "& .MuiDrawer-paper": { width: DRAWER_WIDTH, boxSizing: "border-box", bgcolor: "#0d1320", borderRight: "1px solid #1f2937", display: "flex", flexDirection: "column" },
+        "& .MuiDrawer-paper": {
+          width: DRAWER_WIDTH, boxSizing: "border-box",
+          bgcolor: "#0d1320", borderRight: "1px solid #1f2937",
+          display: "flex", flexDirection: "column",
+        },
       }}>
         <Box sx={{ p: 2.5 }}>
           <Typography fontWeight={700} sx={{ mb: 0.5 }}>Members</Typography>
-          <Typography variant="caption" sx={{ color: "#64748b", mb: 2, display: "block" }}>{members.length} total</Typography>
-          <TextField size="small" fullWidth placeholder="Search members…"
-            value={search} onChange={(e) => setSearch(e.target.value)}
-            InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment> }} />
+          <Typography variant="caption" sx={{ color: "#64748b", mb: 2, display: "block" }}>
+            {members.length} total
+          </Typography>
+          <TextField
+            size="small"
+            fullWidth
+            placeholder="Search members…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize="small" />
+                  </InputAdornment>
+                ),
+              },
+            }}
+          />
         </Box>
         <Divider sx={{ borderColor: "#1f2937" }} />
         <List sx={{ flexGrow: 1, overflow: "auto", py: 0 }}>
           {filtered.map((m) => (
-            <ListItemButton key={m.id} selected={selected?.id === m.id} onClick={() => openMember(m)}
-              sx={{ "&.Mui-selected": { borderLeft: "2px solid #3b82f6", bgcolor: "#131a26" } }}>
-              <ListItemText primary={m.email}
+            <ListItemButton
+              key={m.id}
+              selected={selected?.id === m.id}
+              onClick={() => openMember(m)}
+              sx={{ "&.Mui-selected": { borderLeft: "2px solid #3b82f6", bgcolor: "#131a26" } }}
+            >
+              <ListItemText
+                primary={m.email}
                 secondary={m.role}
-                secondaryTypographyProps={{ sx: { color: "#64748b", fontSize: 11 } }} />
+                slotProps={{ secondary: { sx: { color: "#64748b", fontSize: 11 } } }}
+              />
               <IconButton size="small" color="error" onClick={(e) => { e.stopPropagation(); setDeleteTarget(m); }}>
                 <DeleteIcon fontSize="small" />
               </IconButton>
             </ListItemButton>
           ))}
-          {filtered.length === 0 && <Typography sx={{ p: 2, color: "#64748b", fontSize: 13 }}>No members found.</Typography>}
+          {filtered.length === 0 && (
+            <Typography sx={{ p: 2, color: "#64748b", fontSize: 13 }}>No members found.</Typography>
+          )}
         </List>
         <Divider sx={{ borderColor: "#1f2937" }} />
         <Box sx={{ p: 2 }}>
-          <Button fullWidth variant="contained" onClick={() => setAddOpen(true)}>+ Add Member</Button>
+          <Button fullWidth variant="contained" onClick={() => setSelected(null)}>+ Add Member</Button>
         </Box>
       </Drawer>
 
-      {/* Main */}
+      {/* Main content */}
       <Box component="main" sx={{ flexGrow: 1, p: 4, overflow: "auto" }}>
-       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 4 }}>
-         <Typography
+
+        {/* Top bar */}
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 4 }}>
+          <Typography
             variant="h5"
             fontWeight={700}
             onClick={() => { setSelected(null); setMemberData(null); }}
@@ -138,12 +210,38 @@ export default function TenantAdminDashboard() {
             Member Management
           </Typography>
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            
             <Typography variant="caption" sx={{ color: "#94a3b8" }}>{email}</Typography>
             <Button variant="contained" color="error" onClick={() => dispatch(logout())}>Sign out</Button>
           </Box>
         </Box>
 
+        {/* MFA banner */}
+        {showMfaBanner && (
+          <Alert
+            severity="info"
+            sx={{ mb: 3 }}
+            onClose={handleMfaDismiss}
+            action={
+              <Button color="inherit" size="small" onClick={() => { setShowMfaBanner(false); setMfaModalOpen(true); }}>
+                Set up now
+              </Button>
+            }
+          >
+            Secure your account with two-factor authentication.
+          </Alert>
+        )}
+
+        {/* MFA success */}
+        {mfaSetupSuccess && (
+          <Alert severity="success" sx={{ mb: 3 }} onClose={() => setMfaSetupSuccess(false)}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <SecurityIcon fontSize="small" />
+              <span>Two-factor authentication is now enabled on your account.</span>
+            </Box>
+          </Alert>
+        )}
+
+        {/* General messages */}
         {msg && <Alert severity={msg.type} sx={{ mb: 3 }} onClose={() => setMsg(null)}>{msg.text}</Alert>}
 
         {!selected ? (
@@ -167,8 +265,14 @@ export default function TenantAdminDashboard() {
             <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 1 }}>
               <Typography variant="h6" fontWeight={700}>{selected.email}</Typography>
               <Chip label={selected.role} size="small" />
-              <Button size="small" onClick={() => { setEditTarget(selected); setEditForm({ email: selected.email, role: selected.role }); }}>Edit</Button>
+              <Button size="small" onClick={() => {
+                setEditTarget(selected);
+                setEditForm({ email: selected.email, role: selected.role });
+              }}>
+                Edit
+              </Button>
             </Box>
+
             {memberData && (
               <Box sx={{ mb: 3, display: "flex", alignItems: "center", gap: 2 }}>
                 <Chip
@@ -186,16 +290,34 @@ export default function TenantAdminDashboard() {
             <Paper sx={{ border: "1px solid #1f2937" }}>
               <Table size="small">
                 <TableHead>
-                  <TableRow><TableCell>Time</TableCell><TableCell>IP</TableCell><TableCell>Result</TableCell></TableRow>
+                  <TableRow>
+                    <TableCell>Time</TableCell>
+                    <TableCell>IP</TableCell>
+                    <TableCell>Result</TableCell>
+                  </TableRow>
                 </TableHead>
                 <TableBody>
-                  {!memberData && <TableRow><TableCell colSpan={3} sx={{ color: "#64748b" }}>Loading…</TableCell></TableRow>}
-                  {memberData?.attempts?.length === 0 && <TableRow><TableCell colSpan={3} sx={{ color: "#64748b" }}>No activity.</TableCell></TableRow>}
+                  {!memberData && (
+                    <TableRow><TableCell colSpan={3} sx={{ color: "#64748b" }}>Loading…</TableCell></TableRow>
+                  )}
+                  {memberData?.attempts?.length === 0 && (
+                    <TableRow><TableCell colSpan={3} sx={{ color: "#64748b" }}>No activity.</TableCell></TableRow>
+                  )}
                   {memberData?.attempts?.map((a) => (
                     <TableRow key={a.id}>
-                      <TableCell sx={{ fontFamily: "monospace", fontSize: 12, color: "#64748b" }}>{new Date(a.createdAt).toLocaleString()}</TableCell>
-                      <TableCell sx={{ fontFamily: "monospace", fontSize: 12, color: "#94a3b8" }}>{a.ipAddress}</TableCell>
-                      <TableCell><Chip label={a.success ? "SUCCESS" : "FAILED"} color={a.success ? "success" : "error"} size="small" /></TableCell>
+                      <TableCell sx={{ fontFamily: "monospace", fontSize: 12, color: "#64748b" }}>
+                        {new Date(a.createdAt).toLocaleString()}
+                      </TableCell>
+                      <TableCell sx={{ fontFamily: "monospace", fontSize: 12, color: "#94a3b8" }}>
+                        {a.ipAddress}
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={a.success ? "SUCCESS" : "FAILED"}
+                          color={a.success ? "success" : "error"}
+                          size="small"
+                        />
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -205,8 +327,7 @@ export default function TenantAdminDashboard() {
         )}
       </Box>
 
-     
-
+      {/* Edit dialog */}
       <Dialog open={!!editTarget} onClose={() => setEditTarget(null)}>
         <DialogTitle>Edit member</DialogTitle>
         <DialogContent>
@@ -229,7 +350,9 @@ export default function TenantAdminDashboard() {
       <Dialog open={!!deleteTarget} onClose={() => setDeleteTarget(null)}>
         <DialogTitle>Remove member?</DialogTitle>
         <DialogContent>
-          <DialogContentText>Remove <strong>{deleteTarget?.email}</strong>? This cannot be undone.</DialogContentText>
+          <DialogContentText>
+            Remove <strong>{deleteTarget?.email}</strong>? This cannot be undone.
+          </DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteTarget(null)}>Cancel</Button>

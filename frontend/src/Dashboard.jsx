@@ -3,16 +3,14 @@ import { useSelector, useDispatch } from "react-redux";
 import {
   Box, Drawer, Typography, Button, Card, CardContent,
   Table, TableBody, TableCell, TableHead, TableRow, Chip, Paper,
-  CircularProgress, Collapse,IconButton, Alert,
+  CircularProgress, Collapse, IconButton,
 } from "@mui/material";
 import ShieldIcon from "@mui/icons-material/Shield";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
-import SecurityIcon from "@mui/icons-material/Security";
 import { logout } from "./store/authSlice";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import { getAlerts, explainAlert, getLoginAttempts, resolveAlert, blockForeverAlert, releaseBlockAlert } from "./api";
-import MFASetup from "./MFASetup";
 
 const DRAWER_WIDTH = 230;
 
@@ -27,21 +25,9 @@ export default function Dashboard() {
   const [explanations, setExplanations] = useState({});
   const [attempts, setAttempts] = useState([]);
   const [showActivity, setShowActivity] = useState(true);
-  
-  // MFA state
-  const [showMfaSetup, setShowMfaSetup] = useState(false);
-  const [mfaSetupSuccess, setMfaSetupSuccess] = useState(false);
 
   useEffect(() => {
     loadAlerts();
-    
-    // Check if analyst needs to set up MFA (first time login)
-    // You can detect this from localStorage or a flag from the backend
-    const hasDismissedMfa = localStorage.getItem(`mfa-setup-${email}`);
-    if (role === "TENANT_ADMIN" && !hasDismissedMfa && !mfaSetupSuccess) {
-      // Show MFA setup on first login for analysts
-      setShowMfaSetup(true);
-    }
   }, []);
 
   async function loadAlerts() {
@@ -64,7 +50,6 @@ export default function Dashboard() {
   async function handleAction(actionFn, alertId, label) {
     try {
       await actionFn(token, alertId);
-      // refresh alerts so the status updates
       const data = await getAlerts(token);
       setAlerts(data);
     } catch (err) {
@@ -83,33 +68,12 @@ export default function Dashboard() {
       setExplaining(null);
     }
   }
-  
-  function handleMfaSetupSuccess() {
-    setMfaSetupSuccess(true);
-    setShowMfaSetup(false);
-    localStorage.setItem(`mfa-setup-${email}`, "true");
-  }
-
-  function handleDismissMfa() {
-    localStorage.setItem(`mfa-setup-${email}`, "dismissed");
-    setShowMfaSetup(false);
-  }
 
   const severityColor = (sev) =>
     sev === "HIGH" ? "error" : sev === "MEDIUM" ? "warning" : "success";
 
   return (
     <Box sx={{ display: "flex", minHeight: "100vh" }}>
-      {/* MFA Setup Modal */}
-      {role === "TENANT_ADMIN" && (
-        <MFASetup
-          token={token}
-          email={email}
-          open={showMfaSetup}
-          onClose={handleDismissMfa}
-          onSuccess={handleMfaSetupSuccess}
-        />
-      )}
 
       {/* Sidebar */}
       <Drawer
@@ -138,6 +102,7 @@ export default function Dashboard() {
 
       {/* Main content */}
       <Box component="main" sx={{ flexGrow: 1, p: 4, overflow: "auto" }}>
+
         {/* Top bar */}
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 4 }}>
           <Typography variant="h5" fontWeight={700}>Security Alerts</Typography>
@@ -150,16 +115,6 @@ export default function Dashboard() {
             </Button>
           </Box>
         </Box>
-
-        {/* MFA Setup Alert for Analysts */}
-        {role === "TENANT_ADMIN" && mfaSetupSuccess && (
-          <Alert severity="success" sx={{ mb: 3 }} onClose={handleDismissMfa}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <SecurityIcon fontSize="small" />
-              <span>Two-factor authentication is now enabled on your account!</span>
-            </Box>
-          </Alert>
-        )}
 
         {/* Stat cards */}
         <Box sx={{ display: "flex", gap: 2, mb: 4 }}>
@@ -237,27 +192,17 @@ export default function Dashboard() {
         )}
 
         {/* Recent login activity */}
-        {/* Recent login activity (collapsible) */}
         {!loading && !error && (
           <Box>
-          <Box
-              sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}
-            >
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <Typography variant="h6" fontWeight={700}>
-                  Recent Login Activity
-                </Typography>
+                <Typography variant="h6" fontWeight={700}>Recent Login Activity</Typography>
                 <Chip label={attempts.length} size="small" />
               </Box>
-              <IconButton
-                size="small"
-                sx={{ color: "#94a3b8" }}
-                onClick={() => setShowActivity((v) => !v)}
-              >
+              <IconButton size="small" sx={{ color: "#94a3b8" }} onClick={() => setShowActivity((v) => !v)}>
                 {showActivity ? <ExpandLessIcon /> : <ExpandMoreIcon />}
               </IconButton>
             </Box>
-
             <Collapse in={showActivity}>
               <Paper sx={{ border: "1px solid #1f2937" }}>
                 <Table size="small">
